@@ -295,6 +295,39 @@ interface AnimatedTreeNode {
   isSecondFloor: boolean
 }
 
+interface PrologueTreeData {
+  roots: Array<{ points: Array<[number, number]>; thickness: number; startT: number; endT: number }>
+  trunkRows: Array<{ dy: number; xOff: number; halfW: number; barkCol: number; groove: boolean }>
+  branches: Array<{
+    points: Array<[number, number]>
+    thickness: number
+    startT: number
+    endT: number
+    isPruned: boolean
+    isOptimal: boolean
+    phase: number
+  }>
+  nodes: Array<{ dx: number; dy: number; threshold: number; col: number; isOptimal: boolean }>
+  leaves: Array<{
+    dx: number
+    dy: number
+    radius: number
+    startT: number
+    colMain: number
+    colLight: number
+    colDark: number
+    phase: number
+  }>
+  blossoms: Array<{
+    dx: number
+    dy: number
+    startT: number
+    petalCol: number
+    phase: number
+    size: number
+  }>
+}
+
 export class GalleryScene {
   readonly root = new Container()
   readonly worldLayer = new Container()
@@ -326,6 +359,7 @@ export class GalleryScene {
   private prologueAnimGfx = new Graphics()
   private prologueElapsedSec = 0
   private prologueTreeX = 200
+  private prologueTreeData: PrologueTreeData | null = null
   private deskLampGlowSprite!: Sprite
   private kioskGlowSprite!: Sprite
   private signHaloSprite!: Sprite
@@ -4461,155 +4495,399 @@ export class GalleryScene {
     }
   }
 
-  private drawPrologueTreeAnimation(elapsed: number, t: number): void {
-    const g = this.prologueAnimGfx
-    g.clear()
+  private ensurePrologueTreeData() {
+    if (this.prologueTreeData) return this.prologueTreeData
+    const rand = mulberry32(9047)
 
-    const cx = this.prologueTreeX
-    const baseY = 656
-    const p = Math.max(0, Math.min(1, elapsed / 13.5))
-    const seg = (start: number, end: number) => Math.max(0, Math.min(1, (p - start) / (end - start)))
-
-    // Stage 1: Seed awakening & discrete square wave ripples (0.0 .. 0.24)
-    const seedAlpha = Math.min(1, elapsed / 0.8)
-    const pulse = 0.5 + 0.5 * Math.sin(t * 3.4)
-    for (let r = 0; r < 2; r++) {
-      const wave = ((elapsed * 0.45 + r * 0.5) % 1)
-      const rad = Math.round(10 + wave * 34)
-      const wa = (1 - wave) * 0.28 * seedAlpha
-      g.rect(cx - rad, baseY - Math.round(rad * 0.35), rad * 2, 1).fill({ color: 0xf2c977, alpha: wa })
-    }
-    // Root tendrils spreading left & right
-    const rootSpan = Math.round(seg(0.02, 0.25) * 44)
-    if (rootSpan > 0) {
-      g.rect(cx - rootSpan, baseY + 2, rootSpan * 2, 2).fill({ color: 0x4d6b57, alpha: 0.75 * seedAlpha })
-      g.rect(cx - Math.round(rootSpan * 0.65), baseY + 5, Math.round(rootSpan * 1.3), 1).fill({
-        color: 0x3b5243,
-        alpha: 0.65 * seedAlpha,
-      })
-    }
-    // Glowing pixel seed core
-    g.rect(cx - 5, baseY - 6, 10, 8).fill({ color: 0xf2c977, alpha: (0.2 + 0.18 * pulse) * seedAlpha })
-    g.rect(cx - 3, baseY - 4, 6, 5).fill({ color: 0x6e987c, alpha: seedAlpha })
-    g.rect(cx - 2, baseY - 3, 4, 3).fill({ color: 0xffe89e, alpha: seedAlpha })
-
-    // Stage 2: Trunk & BFS branch growth (0.14 .. 0.58)
-    const trunkGrow = seg(0.12, 0.38)
-    if (trunkGrow > 0) {
-      const th = Math.round(trunkGrow * 66)
-      g.rect(cx - 2, baseY - 4 - th, 4, th).fill({ color: 0x6e987c, alpha: 0.92 })
-      g.rect(cx - 1, baseY - 4 - th, 1, th).fill({ color: 0xf2c977, alpha: 0.85 })
-    }
-
-    // Primary bifurcation at y = baseY - 70
-    const b1 = seg(0.32, 0.54)
-    if (b1 > 0) {
-      const span1 = Math.round(b1 * 38)
-      const rise1 = Math.round(b1 * 48)
-      g.rect(cx - span1, baseY - 70, span1 * 2, 2).fill({ color: 0x6e987c, alpha: 0.9 })
-      // Highlighted optimal path climbing up left-center branch
-      g.rect(cx - span1, baseY - 70, span1, 2).fill({ color: 0xf2c977, alpha: 0.85 })
-      if (rise1 > 0) {
-        g.rect(cx - span1, baseY - 70 - rise1, 2, rise1).fill({ color: 0xf2c977, alpha: 0.9 })
-        g.rect(cx + span1 - 2, baseY - 70 - rise1, 2, rise1).fill({ color: 0x8ab898, alpha: 0.88 })
+    const sampleCurve = (
+      x0: number,
+      y0: number,
+      cx1: number,
+      cy1: number,
+      x1: number,
+      y1: number,
+      steps: number,
+    ): Array<[number, number]> => {
+      const pts: Array<[number, number]> = []
+      for (let i = 0; i <= steps; i++) {
+        const u = i / steps
+        const inv = 1 - u
+        const px = Math.round(inv * inv * x0 + 2 * inv * u * cx1 + u * u * x1)
+        const py = Math.round(inv * inv * y0 + 2 * inv * u * cy1 + u * u * y1)
+        const prev = pts[pts.length - 1]
+        if (!prev || prev[0] !== px || prev[1] !== py) {
+          pts.push([px, py])
+        }
       }
+      return pts
     }
 
-    // Upper crown bridge & sub-branches (0.50 .. 0.74)
-    const b2 = seg(0.48, 0.72)
-    if (b2 > 0) {
-      const span2 = Math.round(b2 * 56)
-      const rise2 = Math.round(b2 * 38)
-      g.rect(cx - 38 - Math.round(b2 * 18), baseY - 118, Math.round(b2 * 38), 2).fill({
-        color: 0x94c4a2,
-        alpha: 0.9,
+    // 1. Gnarled root system spreading into subterranean strata
+    const roots: PrologueTreeData['roots'] = []
+    const rootAngles = [-2.85, -2.55, -2.25, -0.85, -0.58, -0.32, 0.14, 2.98]
+    for (let i = 0; i < rootAngles.length; i++) {
+      const side = i < 3 || i === 7 ? -1 : 1
+      const len = 34 + rand() * 44
+      const endX = Math.round(side * (24 + rand() * 58))
+      const endY = Math.round(6 + rand() * 20)
+      const ctrlX = Math.round(endX * 0.45)
+      const ctrlY = Math.round(endY * (0.25 + rand() * 0.35))
+      roots.push({
+        points: sampleCurve(0, 1, ctrlX, ctrlY, endX, endY, Math.max(8, Math.round(len / 3))),
+        thickness: i < 5 ? 2 : 1,
+        startT: 0.02 + (i % 3) * 0.03,
+        endT: 0.22 + (i % 4) * 0.03,
       })
-      g.rect(cx + 38 - Math.round(b2 * 18), baseY - 118, Math.round(b2 * 38), 2).fill({
-        color: 0x94c4a2,
-        alpha: 0.9,
-      })
-      if (rise2 > 0) {
-        g.rect(cx - 24, baseY - 118 - rise2, 2, rise2).fill({ color: 0xf2c977, alpha: 0.92 })
-        g.rect(cx + 22, baseY - 118 - rise2, 2, rise2).fill({ color: 0x8ab898, alpha: 0.88 })
-        g.rect(cx - Math.round(span2 * 0.42), baseY - 118 - rise2, Math.round(span2 * 0.84), 2).fill({
-          color: 0xf2c977,
-          alpha: 0.72,
+      if (i < 4) {
+        const subStartX = Math.round(endX * 0.55)
+        const subStartY = Math.round(endY * 0.55)
+        roots.push({
+          points: sampleCurve(
+            subStartX,
+            subStartY,
+            subStartX + side * 8,
+            subStartY + 8,
+            subStartX + side * Math.round(12 + rand() * 14),
+            subStartY + Math.round(9 + rand() * 9),
+            6,
+          ),
+          thickness: 1,
+          startT: 0.14 + i * 0.02,
+          endT: 0.3,
         })
       }
     }
 
-    // Stage 3: Pruned dead-end branches turning dark red and dissolving into quiet negative space (0.38 .. 0.82)
-    const pruneSpawn = seg(0.36, 0.56)
-    const pruneFade = seg(0.58, 0.86)
-    const pruneAlpha = pruneSpawn * (1 - pruneFade * 0.76)
-    if (pruneAlpha > 0.02) {
-      const prunedOffsets: Array<[number, number, number]> = [
-        [-32, -46, -18],
-        [24, -54, 22],
-        [-58, -94, -20],
-        [54, -98, 22],
-        [-14, -96, -10],
-      ]
-      for (const [ox, oy, dx] of prunedOffsets) {
-        const bx = cx + (dx > 0 ? Math.abs(ox) - dx : ox)
-        const by = baseY + oy
-        const len = Math.round(Math.abs(dx) * pruneSpawn)
-        g.rect(bx, by, len, 2).fill({ color: 0xa83c32, alpha: pruneAlpha * 0.88 })
-        // Hollow pruned node at tip + drifting cut embers
-        const tipX = dx > 0 ? bx + len : bx - 3
-        g.rect(tipX, by - 1, 4, 4).fill({ color: 0xd45848, alpha: pruneAlpha })
-        g.rect(tipX + 1, by, 2, 2).fill({ color: 0x16110e, alpha: pruneAlpha })
-        if (pruneFade > 0.05) {
-          const driftY = by - Math.round(pruneFade * 16)
-          g.rect(tipX + 1, driftY, 2, 2).fill({ color: 0xe07a6d, alpha: (1 - pruneFade) * 0.8 })
+    // 2. Tapered organic trunk with bark rows (dy = 0 .. -78)
+    const trunkPalette = [0x3b2d26, 0x4c3a30, 0x5c4639, 0x6e5443]
+    const trunkRows: PrologueTreeData['trunkRows'] = []
+    const trunkHeight = 78
+    const trunkXAt = (dy: number) => {
+      const u = Math.min(1, Math.max(0, -dy / trunkHeight))
+      return Math.round(Math.sin(u * Math.PI * 1.15) * 4 - u * 2)
+    }
+    for (let dy = 0; dy >= -trunkHeight; dy--) {
+      const u = -dy / trunkHeight
+      const flare = u < 0.16 ? (0.16 - u) * 20 : 0
+      const halfW = Math.max(2, Math.round(2.1 + Math.pow(1 - u, 1.5) * 4.1 + flare))
+      trunkRows.push({
+        dy,
+        xOff: trunkXAt(dy),
+        halfW,
+        barkCol: trunkPalette[Math.floor(rand() * trunkPalette.length)],
+        groove: rand() > 0.62,
+      })
+    }
+
+    // 3. Recursive multi-depth algorithmic branches, pruned dead-ends, foliage & blossoms
+    const branches: PrologueTreeData['branches'] = []
+    const nodes: PrologueTreeData['nodes'] = []
+    const leaves: PrologueTreeData['leaves'] = []
+    const blossoms: PrologueTreeData['blossoms'] = []
+
+    const leafPalettes: Array<[number, number, number]> = [
+      [0x284034, 0x4b6e58, 0x7ca688],
+      [0x2f4b3c, 0x5c856b, 0x94c4a2],
+      [0x35523d, 0x6e987c, 0xaad4b4],
+    ]
+    const blossomCols = [0xf2c977, 0xfff4d4, 0xe8a08e, 0x94c4a2]
+
+    const growBranch = (
+      x0: number,
+      y0: number,
+      angle: number,
+      length: number,
+      depth: number,
+      maxDepth: number,
+      thickness: number,
+      startT: number,
+      isOptimal: boolean,
+    ) => {
+      const x1 = Math.round(x0 + Math.cos(angle) * length)
+      const y1 = Math.round(y0 + Math.sin(angle) * length)
+      const bend = (rand() - 0.5) * length * 0.34
+      const cx1 = Math.round((x0 + x1) * 0.5 - Math.sin(angle) * bend)
+      const cy1 = Math.round((y0 + y1) * 0.5 + Math.cos(angle) * bend)
+      const endT = Math.min(0.76, startT + 0.1 + depth * 0.015)
+
+      branches.push({
+        points: sampleCurve(x0, y0, cx1, cy1, x1, y1, Math.max(5, Math.round(length / 3))),
+        thickness,
+        startT,
+        endT,
+        isPruned: false,
+        isOptimal,
+        phase: rand() * Math.PI * 2,
+      })
+
+      if (depth <= 4) {
+        nodes.push({
+          dx: x1,
+          dy: y1,
+          threshold: Math.min(0.75, endT - 0.02),
+          col: isOptimal ? 0xffe89e : depth <= 2 ? 0xf2c977 : 0x94c4a2,
+          isOptimal,
+        })
+      }
+
+      // Spawn pruned dead-end branches on intermediate forks
+      if ((depth === 2 || depth === 3) && rand() > 0.32) {
+        const pruneSide = rand() > 0.5 ? 1 : -1
+        const pAngle = angle + pruneSide * (0.65 + rand() * 0.45)
+        const pLen = 14 + rand() * 14
+        const px1 = Math.round(x1 + Math.cos(pAngle) * pLen)
+        const py1 = Math.round(y1 + Math.sin(pAngle) * pLen)
+        branches.push({
+          points: sampleCurve(
+            x1,
+            y1,
+            Math.round((x1 + px1) * 0.5),
+            Math.round((y1 + py1) * 0.5 + 3),
+            px1,
+            py1,
+            Math.max(4, Math.round(pLen / 3)),
+          ),
+          thickness: 1,
+          startT: endT,
+          endT: Math.min(0.7, endT + 0.11),
+          isPruned: true,
+          isOptimal: false,
+          phase: rand() * Math.PI * 2,
+        })
+      }
+
+      if (depth < maxDepth) {
+        const childCount = depth === 1 ? 3 : 2
+        const optimalIdx = isOptimal ? Math.floor(rand() * childCount) : -1
+        const spreadBase = depth === 1 ? 0.56 : 0.42
+        for (let c = 0; c < childCount; c++) {
+          const offset = childCount === 3 ? c - 1 : c === 0 ? -0.55 : 0.55
+          const childAngle = angle + offset * (spreadBase + rand() * 0.22) + (rand() - 0.5) * 0.14
+          const clampedAngle = Math.max(-Math.PI * 0.92, Math.min(-Math.PI * 0.08, childAngle))
+          const childLen = length * (0.72 + rand() * 0.12)
+          growBranch(
+            x1,
+            y1,
+            clampedAngle,
+            childLen,
+            depth + 1,
+            maxDepth,
+            Math.max(1, thickness - (depth % 2 === 1 ? 1 : 0)),
+            endT - 0.02,
+            isOptimal && c === optimalIdx,
+          )
+        }
+      }
+
+      if (depth >= maxDepth - 1) {
+        const clusterCount = depth === maxDepth ? 3 : 2
+        for (let k = 0; k < clusterCount; k++) {
+          const pal = leafPalettes[Math.floor(rand() * leafPalettes.length)]
+          leaves.push({
+            dx: x1 + Math.round((rand() - 0.5) * 14),
+            dy: y1 + Math.round((rand() - 0.5) * 10),
+            radius: 4 + Math.floor(rand() * 4),
+            startT: Math.min(0.76, endT - 0.02 + k * 0.03),
+            colDark: pal[0],
+            colMain: pal[1],
+            colLight: pal[2],
+            phase: rand() * Math.PI * 2,
+          })
+        }
+      }
+
+      if (depth === maxDepth && (isOptimal || rand() > 0.44)) {
+        blossoms.push({
+          dx: x1 + Math.round((rand() - 0.5) * 4),
+          dy: y1 - 2,
+          startT: 0.66 + rand() * 0.14,
+          petalCol: isOptimal ? 0xffe89e : blossomCols[Math.floor(rand() * blossomCols.length)],
+          phase: rand() * Math.PI * 2,
+          size: isOptimal ? 4 : rand() > 0.5 ? 3 : 2,
+        })
+      }
+    }
+
+    // Lower lateral boughs emerging from trunk + main crown split at top
+    growBranch(trunkXAt(-46) - 2, -46, -2.35, 34, 2, 4, 2, 0.24, false)
+    growBranch(trunkXAt(-58) + 2, -58, -0.78, 32, 2, 4, 2, 0.28, false)
+    growBranch(trunkXAt(-trunkHeight), -trunkHeight, -Math.PI * 0.5, 42, 1, 5, 3, 0.31, true)
+
+    this.prologueTreeData = { roots, trunkRows, branches, nodes, leaves, blossoms }
+    return this.prologueTreeData
+  }
+
+  private drawPrologueTreeAnimation(elapsed: number, t: number): void {
+    const g = this.prologueAnimGfx
+    g.clear()
+
+    const tree = this.ensurePrologueTreeData()
+    const cx = this.prologueTreeX
+    const baseY = 656
+    const p = Math.max(0, Math.min(1, elapsed / 13.5))
+    const seg = (start: number, end: number) => Math.max(0, Math.min(1, (p - start) / Math.max(0.001, end - start)))
+
+    // Stage 1: Seed awakening & discrete square wave ripples (0.0 .. 0.24)
+    const seedAlpha = Math.min(1, elapsed / 0.8)
+    const pulse = 0.5 + 0.5 * Math.sin(t * 3.4)
+    for (let r = 0; r < 3; r++) {
+      const wave = (elapsed * 0.42 + r * 0.33) % 1
+      const rad = Math.round(12 + wave * 44)
+      const wa = (1 - wave) * 0.25 * seedAlpha
+      g.rect(cx - rad, baseY - Math.round(rad * 0.26), rad * 2, 1).fill({ color: 0xf2c977, alpha: wa })
+    }
+
+    // Gnarled underground roots
+    for (const root of tree.roots) {
+      const rg = seg(root.startT, root.endT)
+      if (rg <= 0) continue
+      const count = Math.max(1, Math.floor(root.points.length * rg))
+      for (let i = 0; i < count; i++) {
+        const [rx, ry] = root.points[i]
+        const taper = i > root.points.length * 0.65 ? 1 : root.thickness
+        g.rect(cx + rx, baseY + ry, taper + 1, taper).fill({ color: 0x4c3a30, alpha: 0.9 * seedAlpha })
+        if (taper >= 2) {
+          g.rect(cx + rx, baseY + ry, taper, 1).fill({ color: 0x6e987c, alpha: 0.42 * seedAlpha })
         }
       }
     }
 
-    // State-space square nodes along cultivated path
-    const nodes: Array<[number, number, number, number]> = [
-      [cx, baseY - 36, 0.25, 0xf2c977],
-      [cx, baseY - 70, 0.36, 0xf2c977],
-      [cx - 38, baseY - 70, 0.45, 0xffe89e],
-      [cx + 38, baseY - 70, 0.48, 0x94c4a2],
-      [cx - 38, baseY - 118, 0.56, 0xffe89e],
-      [cx + 38, baseY - 118, 0.6, 0x94c4a2],
-      [cx - 24, baseY - 156, 0.7, 0xffe89e],
-      [cx + 22, baseY - 156, 0.72, 0xf4efe2],
-    ]
-    for (const [nx, ny, threshold, col] of nodes) {
-      const na = seg(threshold, threshold + 0.1)
-      if (na > 0) {
-        g.rect(nx - 3, ny - 3, 6, 6).fill({ color: col, alpha: na * 0.92 })
-        g.rect(nx - 1, ny - 1, 2, 2).fill({ color: 0xfff9e6, alpha: na })
+    // Glowing pixel seed core at root crown
+    g.rect(cx - 7, baseY - 6, 14, 8).fill({ color: 0xf2c977, alpha: (0.18 + 0.16 * pulse) * seedAlpha })
+    g.rect(cx - 3, baseY - 4, 6, 5).fill({ color: 0x6e987c, alpha: seedAlpha })
+    g.rect(cx - 2, baseY - 3, 4, 3).fill({ color: 0xffe89e, alpha: seedAlpha })
+
+    // Stage 2: Tapered bark trunk + golden optimal-path sap vein (0.08 .. 0.36)
+    const trunkGrow = seg(0.08, 0.36)
+    if (trunkGrow > 0) {
+      const maxRows = Math.floor(tree.trunkRows.length * trunkGrow)
+      for (let i = 0; i < maxRows; i++) {
+        const row = tree.trunkRows[i]
+        const rx = cx + row.xOff - row.halfW
+        const ry = baseY + row.dy
+        const w = row.halfW * 2
+        g.rect(rx, ry, w, 1).fill({ color: row.barkCol, alpha: 0.95 })
+        // Left sunlit moss rim & right bark shadow
+        g.rect(rx, ry, 1, 1).fill({ color: 0x7ea688, alpha: 0.55 })
+        if (w > 4) {
+          g.rect(rx + w - 1, ry, 1, 1).fill({ color: 0x241a15, alpha: 0.75 })
+        }
+        if (row.groove && w > 5) {
+          g.rect(cx + row.xOff + 1, ry, 1, 1).fill({ color: 0x2e221c, alpha: 0.72 })
+        }
+        // Golden algorithmic sap core climbing up the trunk
+        const sapWave = 0.55 + 0.35 * Math.sin(t * 3.2 + row.dy * 0.18)
+        g.rect(cx + row.xOff - 1, ry, 1, 1).fill({ color: 0xf2c977, alpha: sapWave })
       }
     }
 
-    // Stage 4: Blooming algorithmic blossoms & rising starlight spores (0.68 .. 1.0)
-    const bloom = seg(0.66, 0.95)
-    if (bloom > 0) {
-      const blossoms: Array<[number, number, number, number]> = [
-        [cx - 24, baseY - 160, 0xf2c977, 0.0],
-        [cx + 22, baseY - 160, 0xf4efe2, 0.9],
-        [cx, baseY - 172, 0xffe89e, 1.7],
-        [cx - 50, baseY - 124, 0xd45848, 2.4],
-        [cx + 50, baseY - 124, 0x94c4a2, 3.1],
-      ]
-      for (const [fx, fy, petalCol, ph] of blossoms) {
-        const s = Math.max(1, Math.round(bloom * 4))
-        const glow = (0.45 + 0.45 * (0.5 + 0.5 * Math.sin(t * 2.8 + ph))) * bloom
-        g.rect(fx - s - 2, fy - s - 2, (s + 2) * 2, (s + 2) * 2).fill({ color: petalCol, alpha: glow * 0.25 })
-        g.rect(fx - s, fy - 1, s * 2 + 1, 3).fill({ color: petalCol, alpha: bloom * 0.92 })
-        g.rect(fx - 1, fy - s, 3, s * 2 + 1).fill({ color: petalCol, alpha: bloom * 0.92 })
-        g.rect(fx - 1, fy - 1, 3, 3).fill({ color: 0xfff9e6, alpha: bloom })
+    // Stage 3: Multi-depth organic branches & pruned dead-end twigs
+    for (const br of tree.branches) {
+      const bg = seg(br.startT, br.endT)
+      if (bg <= 0) continue
+
+      if (br.isPruned) {
+        const pruneFade = seg(br.endT + 0.04, br.endT + 0.32)
+        const pruneAlpha = bg * (1 - pruneFade * 0.82)
+        if (pruneAlpha <= 0.03) continue
+        const count = Math.max(1, Math.floor(br.points.length * bg))
+        for (let i = 0; i < count; i++) {
+          const [bx, by] = br.points[i]
+          g.rect(cx + bx, baseY + by, 2, 1).fill({ color: 0xb54438, alpha: pruneAlpha * 0.88 })
+        }
+        if (bg > 0.75) {
+          const [tx, ty] = br.points[br.points.length - 1]
+          g.rect(cx + tx - 1, baseY + ty - 1, 4, 4).fill({ color: 0xd45848, alpha: pruneAlpha })
+          g.rect(cx + tx, baseY + ty, 2, 2).fill({ color: 0x16110e, alpha: pruneAlpha })
+          if (pruneFade > 0.05) {
+            const driftY = baseY + ty - Math.round(pruneFade * 18)
+            g.rect(cx + tx, driftY, 2, 2).fill({ color: 0xe07a6d, alpha: (1 - pruneFade) * 0.85 })
+          }
+        }
+        continue
       }
 
-      // Gently ascending luminous spores drifting toward the gallery floor above
-      for (let i = 0; i < 16; i++) {
-        const cycle = (t * 0.18 + i * 0.137) % 1
-        const sx = cx + Math.round(Math.sin(i * 2.7 + t * 0.9) * 58)
-        const sy = Math.round(baseY - 40 - cycle * 195)
-        const sa = Math.sin(cycle * Math.PI) * bloom * 0.72
+      const count = Math.max(1, Math.floor(br.points.length * bg))
+      for (let i = 0; i < count; i++) {
+        const [bx, by] = br.points[i]
+        const w = br.thickness
+        const barkCol = w >= 3 ? 0x574337 : w === 2 ? 0x695142 : 0x735b49
+        g.rect(cx + bx, baseY + by, w, w).fill({ color: barkCol, alpha: 0.94 })
+        if (w >= 2) {
+          g.rect(cx + bx, baseY + by, w, 1).fill({ color: 0x7ea688, alpha: 0.45 })
+        }
+        if (br.isOptimal) {
+          const sig = 0.5 + 0.5 * Math.sin(t * 4.0 - i * 0.45 + br.phase)
+          g.rect(cx + bx, baseY + by, 1, 1).fill({
+            color: sig > 0.7 ? 0xfff4c4 : 0xf2c977,
+            alpha: 0.72 + sig * 0.25,
+          })
+        }
+      }
+    }
+
+    // Stage 4: Layered pixel foliage canopy clusters
+    for (const lf of tree.leaves) {
+      const la = seg(lf.startT, lf.startT + 0.16)
+      if (la <= 0.02) continue
+      const sway = Math.round(Math.sin(t * 1.45 + lf.phase) * (la > 0.7 ? 1 : 0))
+      const lx = cx + lf.dx + sway
+      const ly = baseY + lf.dy
+      const r = Math.max(2, Math.round(lf.radius * (0.4 + 0.6 * la)))
+      // Dark shadow base
+      g.rect(lx - r, ly - Math.round(r * 0.55) + 1, r * 2, Math.max(2, Math.round(r * 1.25))).fill({
+        color: lf.colDark,
+        alpha: la * 0.88,
+      })
+      // Mid foliage body
+      g.rect(lx - r + 1, ly - Math.round(r * 0.75), Math.max(2, r * 2 - 2), Math.max(2, Math.round(r * 1.2))).fill({
+        color: lf.colMain,
+        alpha: la * 0.92,
+      })
+      // Sunlit upper-left pixel highlights
+      g.rect(lx - Math.max(1, r - 2), ly - Math.round(r * 0.75), Math.max(2, r), Math.max(1, Math.round(r * 0.55))).fill({
+        color: lf.colLight,
+        alpha: la * 0.75,
+      })
+    }
+
+    // State-space square nodes at key branch bifurcations
+    for (const nd of tree.nodes) {
+      const na = seg(nd.threshold, nd.threshold + 0.1)
+      if (na <= 0.02) continue
+      const nx = cx + nd.dx
+      const ny = baseY + nd.dy
+      const sz = nd.isOptimal ? 4 : 3
+      g.rect(nx - Math.floor(sz / 2), ny - Math.floor(sz / 2), sz, sz).fill({
+        color: nd.col,
+        alpha: na * 0.9,
+      })
+      g.rect(nx, ny, 1, 1).fill({ color: 0xfff9e6, alpha: na })
+    }
+
+    // Stage 5: Blooming algorithmic blossoms & ascending starlight spores
+    let maxBloom = 0
+    for (const bl of tree.blossoms) {
+      const ba = seg(bl.startT, bl.startT + 0.22)
+      if (ba <= 0.02) continue
+      maxBloom = Math.max(maxBloom, ba)
+      const sway = Math.round(Math.sin(t * 1.6 + bl.phase) * 1)
+      const fx = cx + bl.dx + sway
+      const fy = baseY + bl.dy
+      const s = Math.max(1, Math.round(ba * bl.size))
+      const glow = (0.42 + 0.45 * (0.5 + 0.5 * Math.sin(t * 2.8 + bl.phase))) * ba
+      g.rect(fx - s - 2, fy - s - 2, (s + 2) * 2, (s + 2) * 2).fill({ color: bl.petalCol, alpha: glow * 0.24 })
+      g.rect(fx - s, fy - 1, s * 2 + 1, 3).fill({ color: bl.petalCol, alpha: ba * 0.94 })
+      g.rect(fx - 1, fy - s, 3, s * 2 + 1).fill({ color: bl.petalCol, alpha: ba * 0.94 })
+      g.rect(fx - 1, fy - 1, 3, 3).fill({ color: 0xfff9e6, alpha: ba })
+    }
+
+    if (maxBloom > 0.05) {
+      for (let i = 0; i < 20; i++) {
+        const cycle = (t * 0.16 + i * 0.137) % 1
+        const sx = cx + Math.round(Math.sin(i * 2.7 + t * 0.9) * 86)
+        const sy = Math.round(baseY - 45 - cycle * 215)
+        const sa = Math.sin(cycle * Math.PI) * maxBloom * 0.72
         const col = i % 3 === 0 ? 0xffe89e : i % 3 === 1 ? 0x94c4a2 : 0xf4efe2
         g.rect(sx, sy, 2, 2).fill({ color: col, alpha: sa })
       }
