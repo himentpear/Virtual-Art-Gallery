@@ -37,6 +37,7 @@ export class GalleryHud {
   private callbacks: HudCallbacks
   private toastTimer?: number
   private topMenuHideTimer?: number
+  private prologueTimers: number[] = []
   private topMenuVisible = true
   private isPointerInTopArea = false
   private lastPromptHotspotId: string | null = null
@@ -268,11 +269,12 @@ export class GalleryHud {
     this.stateTagEl.textContent = telemetry.isBacklit ? `${clipLabel} · 柔光散射` : clipLabel
     this.stateTagEl.classList.toggle('backlit', Boolean(telemetry.isBacklit))
 
-    const meditative = mode === 'sit_bench'
+    const meditative = mode === 'sit_bench' || mode === 'prologue'
+    this.root.classList.toggle('immersive-prologue', mode === 'prologue')
     this.topBar.classList.toggle('dimmed', meditative)
     this.wingNav.classList.toggle('dimmed', meditative)
     this.bottomBar.classList.toggle('dimmed', meditative)
-    this.sitBanner.classList.toggle('hidden', !meditative)
+    this.sitBanner.classList.toggle('hidden', mode !== 'sit_bench')
   }
 
   public updatePromptPosition(
@@ -313,78 +315,98 @@ export class GalleryHud {
     this.promptPill.style.top = `${Math.round(cssY - 6)}px`
   }
 
+  private clearPrologueTimers(): void {
+    for (const id of this.prologueTimers) {
+      window.clearTimeout(id)
+    }
+    this.prologueTimers = []
+  }
+
   public showPrologueModal(
-    treeDataUrl: string,
+    _treeDataUrl: string,
     _bannerDataUrl: string,
     profile: VisitorProfile,
-    gateOpen: boolean,
+    _gateOpen: boolean,
   ): void {
+    this.clearPrologueTimers()
     const visitorName = profile.name.trim() || '旅人'
+
     this.prologueModalEl.innerHTML = `
-      <div class="prologue-card poetic">
-        <aside class="prologue-visual-col">
-          <div class="prologue-visual-frame">
-            <img src="${treeDataUrl}" alt="生长中的算法树" class="prologue-tree-img" />
-            <div class="prologue-visual-caption">
-              <span>《生长中的算法树》</span>
-              <span class="caption-en">Cultivation &amp; Pruning</span>
-            </div>
-          </div>
-          <div class="prologue-seed-note">
-            <span>一粒种子 · 万千分叉 · 一次驻足</span>
-          </div>
-        </aside>
-
-        <section class="prologue-content-col poetic-sheet">
-          <div class="prologue-header poetic-head">
-            <div class="prologue-eyebrow">
-              <span class="unit-badge">序章 · PROLOGUE</span>
-              <span class="poetic-sub">栽培与剪枝：程序化生成到算法美学</span>
-            </div>
+      <div class="prologue-floating-stage" data-role="prologue-stage">
+        <div class="prologue-floating-poem">
+          <div class="pf-title-block pf-beat" data-beat="0">
+            <div class="pf-eyebrow">序章 · 栽培与剪枝</div>
             <h2>未眠的枝桠</h2>
+            <div class="pf-sub">Cultivation &amp; Pruning · 算法美学序言</div>
           </div>
 
-          <article class="prologue-poem">
-            <p class="poem-lead">凌晨四点醒来，看见计算的荒原上，有一粒种子尚未眠去。</p>
-            <p>
-              规则不过是几行沉默的刻度——左与右，进与退，光与影的投射。然而当第一声“咔哒”在寂静中响起，万千条可能的枝桠便在黑暗里悄然抽芽。
-            </p>
-            <p>
-              机器是不知疲倦的园丁。它沿着每一条分叉摸索，在没有出口的迷途上轻轻落剪。那些被剪去的枝条并未真正消失，它们化作树冠间安静的留白，让唯一通向终点的光亮得以浮现。
-            </p>
-            <p class="poem-question">
-              可是，一条走得通的路，便值得长久地驻足吗？
-            </p>
-            <p>
-              纸偶的影子在幕布上交叠又离散，发条的脚步在方格间叩问回音。算法能丈量最短的步数，却无法替一次偶遇的心动命名。
-            </p>
-            <p class="poem-coda">
-              每一关都是一粒微小的种子。<br />
-              规则予它生长的形骸，算法修剪它繁芜的歧路；<br />
-              唯有当你俯身走入其中，那些原本冰冷的节点，才会在人类的凝视里，开出第一朵花。
-            </p>
-          </article>
+          <p class="pf-line pf-lead pf-beat" data-beat="1">
+            凌晨四点醒来，看见计算的荒原上，有一粒种子尚未眠去。
+          </p>
 
-          <div class="prologue-footer poetic-foot">
-            <div class="prologue-epigraph">
-              <span>致驻足者 <strong>${visitorName}</strong> · 通行证 ${profile.passId}</span>
-            </div>
-            <div class="prologue-actions">
-              <button type="button" class="prologue-primary-btn" data-action="unlock-gate-explore">
-                ${gateOpen ? '推门入园 [Enter]' : '拾起种子 · 步入展厅 [Enter]'}
-              </button>
-              <button type="button" class="prologue-ghost-btn" data-action="close-prologue">
-                合上展签 [E / Esc]
-              </button>
-            </div>
+          <p class="pf-line pf-beat" data-beat="2">
+            规则不过是几行沉默的刻度——左与右，进与退，光与影的投射。然而当第一声“咔哒”在寂静中响起，万千条可能的枝桠便在黑暗里悄然抽芽。
+          </p>
+
+          <p class="pf-line pf-beat" data-beat="3">
+            机器是不知疲倦的园丁。它沿着每一条分叉摸索，在没有出口的迷途上轻轻落剪。那些被剪去的枝条并未真正消失，它们化作树冠间安静的留白，让唯一通向终点的光亮得以浮现。
+          </p>
+
+          <p class="pf-line pf-question pf-beat" data-beat="4">
+            可是，一条走得通的路，便值得长久地驻足吗？
+          </p>
+
+          <p class="pf-line pf-beat" data-beat="5">
+            纸偶的影子在幕布上交叠又离散，发条的脚步在方格间叩问回音。算法能丈量最短的步数，却无法替一次偶遇的心动命名。
+          </p>
+
+          <p class="pf-line pf-coda pf-beat" data-beat="6">
+            每一关都是一粒微小的种子。<br />
+            规则予它生长的形骸，算法修剪它繁芜的歧路；<br />
+            唯有当你俯身走入其中，那些原本冰冷的节点，才会在人类的凝视里，开出第一朵花。
+          </p>
+
+          <div class="pf-dedication pf-beat" data-beat="7">
+            <span>致驻足者 ${visitorName} · ${profile.passId}</span>
+            <span class="pf-progress-bar"><i></i></span>
           </div>
-        </section>
+        </div>
+
+        <button type="button" class="pf-skip-hint" data-action="unlock-gate-explore">
+          [E / Esc / Enter] 回正镜头
+        </button>
       </div>
     `
+
     this.prologueModalEl.classList.remove('hidden')
+    const stageEl = this.prologueModalEl.querySelector<HTMLElement>('[data-role="prologue-stage"]')
+    const beats = Array.from(this.prologueModalEl.querySelectorAll<HTMLElement>('.pf-beat'))
+    const scheduleMs = [450, 1400, 3400, 5800, 8200, 10100, 12100, 13200]
+
+    beats.forEach((el, idx) => {
+      const delay = scheduleMs[idx] ?? idx * 1800
+      const tid = window.setTimeout(() => {
+        el.classList.add('visible')
+      }, delay)
+      this.prologueTimers.push(tid)
+    })
+
+    // Begin soft fade at 14.9s and automatically return camera to normal gallery framing at 15.8s
+    this.prologueTimers.push(
+      window.setTimeout(() => {
+        stageEl?.classList.add('fading-out')
+      }, 14900),
+    )
+    this.prologueTimers.push(
+      window.setTimeout(() => {
+        this.callbacks.onUnlockGateAndExplore()
+      }, 15800),
+    )
   }
 
   public hidePrologueModal(): void {
+    this.clearPrologueTimers()
     this.prologueModalEl.classList.add('hidden')
+    this.prologueModalEl.innerHTML = ''
   }
 }

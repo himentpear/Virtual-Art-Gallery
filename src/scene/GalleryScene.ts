@@ -316,12 +316,16 @@ export class GalleryScene {
   readonly frontParticleLayer = new Container()
   readonly frontColorGradeLayer = new Container()
   readonly foregroundParallaxLayer = new Container()
+  readonly prologueLayer = new Container()
   readonly promptLayer = new Container()
   readonly postLayer = new Container()
 
   // Animated plants, equipment & artwork overlays
   private animatedTrees: AnimatedTreeNode[] = []
   private deviceAnimGfx = new Graphics()
+  private prologueAnimGfx = new Graphics()
+  private prologueElapsedSec = 0
+  private prologueTreeX = 200
   private deskLampGlowSprite!: Sprite
   private kioskGlowSprite!: Sprite
   private signHaloSprite!: Sprite
@@ -424,6 +428,7 @@ export class GalleryScene {
     this.buildEntranceGatesAndStanchions()
     this.buildLightingAndParticles()
     this.buildForegroundParallax()
+    this.buildPrologueSubterraneanStage()
     this.buildDoFAndVignette()
     this.assembleHierarchy()
   }
@@ -452,6 +457,7 @@ export class GalleryScene {
       this.backWallLightingLayer,
       this.regBackdropLayer,
       this.floorLayer,
+      this.prologueLayer,
       this.backParticleLayer,
       this.depthSortedLayer,
       this.midVolumetricLightingLayer,
@@ -3418,6 +3424,46 @@ export class GalleryScene {
     }
   }
 
+  private buildPrologueSubterraneanStage(): void {
+    const H = 320
+    const surf = createPixelSurface(WORLD_WIDTH, H)
+    const { ctx } = surf
+    const rand = mulberry32(7421)
+
+    // Seamless vertical gradient below gallery floor (y = 358..678)
+    for (let y = 0; y < H; y++) {
+      const t = y / (H - 1)
+      const col =
+        t < 0.2
+          ? lerpColor([5, 6, 10], [16, 13, 12], t / 0.2)
+          : lerpColor([16, 13, 12], [26, 20, 17], (t - 0.2) / 0.8)
+      px(ctx, 0, y, WORLD_WIDTH, 1, col)
+    }
+
+    // Subtle discrete state-space coordinate grid in ivory
+    for (let gy = 26; gy < H - 16; gy += 16) {
+      for (let gx = 16; gx < WORLD_WIDTH - 16; gx += 16) {
+        if (rand() > 0.28) {
+          px(ctx, gx, gy, 1, 1, 'rgba(244, 239, 226, 0.08)')
+        }
+      }
+    }
+
+    // Stratified soil & warm horizon hairline near bottom stage ground (local y = 248, world y = 606)
+    px(ctx, 0, 248, WORLD_WIDTH, 1, 'rgba(110, 152, 124, 0.24)')
+    px(ctx, 0, 250, WORLD_WIDTH, 70, 'rgba(10, 8, 7, 0.55)')
+    for (let i = 0; i < 180; i++) {
+      const sx = Math.floor(rand() * WORLD_WIDTH)
+      const sy = 24 + Math.floor(rand() * 216)
+      px(ctx, sx, sy, 1, 1, rand() > 0.55 ? 'rgba(242, 201, 119, 0.08)' : 'rgba(110, 152, 124, 0.09)')
+    }
+
+    const bgSprite = new Sprite(surfaceToNearestTexture(surf))
+    bgSprite.y = 358
+    this.prologueLayer.addChild(bgSprite, this.prologueAnimGfx)
+    this.prologueLayer.visible = false
+  }
+
   private buildDoFAndVignette(): void {
     this.dofRenderTex = RenderTexture.create({
       width: SCENE_WIDTH,
@@ -3939,10 +3985,13 @@ export class GalleryScene {
       this.dofBlurFilter.strength = 3.2
     } else if (mode === 'prologue') {
       this.patrolActive = false
-      this.focusX = hotspot ? hotspot.x : 340
-      this.focusY = 186
-      this.focusZoom = 1.34
-      this.dofBlurFilter.strength = 2.8
+      this.prologueElapsedSec = 0
+      const targetX = hotspot ? hotspot.x : heroX
+      this.focusX = Math.max(SCENE_WIDTH * 0.5, Math.min(WORLD_WIDTH - SCENE_WIDTH * 0.5, targetX))
+      this.focusY = 492
+      this.focusZoom = 1.0
+      this.prologueTreeX = Math.round(this.focusX - 138)
+      this.dofBlurFilter.strength = 0.4
     } else if (mode === 'gaze_center') {
       this.patrolActive = false
       const cx = hotspot ? hotspot.x : WING_CENTERS.center
@@ -4001,9 +4050,10 @@ export class GalleryScene {
 
     const halfW = (SCENE_WIDTH * 0.5) / rawZoom
     const halfH = (SCENE_HEIGHT * 0.5) / rawZoom
+    const maxCamY = mode === 'prologue' ? 678 - halfH : SCENE_HEIGHT - halfH
     this.cameraTargetZoom = rawZoom
     this.cameraTargetX = Math.max(halfW, Math.min(WORLD_WIDTH - halfW, rawX))
-    this.cameraTargetY = Math.max(halfH, Math.min(SCENE_HEIGHT - halfH, rawY))
+    this.cameraTargetY = Math.max(halfH, Math.min(maxCamY, rawY))
   }
 
   public updateHotspotIndicator(_hotspot: Hotspot | null): void {
@@ -4017,7 +4067,8 @@ export class GalleryScene {
 
     // 1. Update & Lerp Camera Pan/Zoom + Parallax Layers
     this.updateCameraTarget(mode, hero, dt)
-    const camLerp = 1 - Math.exp(-dt * 5.8)
+    const camSpeed = mode === 'prologue' || this.cameraY > 205 ? 2.6 : 5.8
+    const camLerp = 1 - Math.exp(-dt * camSpeed)
     this.cameraX += (this.cameraTargetX - this.cameraX) * camLerp
     this.cameraY += (this.cameraTargetY - this.cameraY) * camLerp
     this.cameraZoom += (this.cameraTargetZoom - this.cameraZoom) * camLerp
@@ -4199,6 +4250,16 @@ export class GalleryScene {
       b.sprite.position.set(b.baseX + ox, b.baseY + oy)
       b.sprite.tint = b.isWarm ? this.preset.sconceColor : this.preset.skylightColor
       b.sprite.alpha = b.baseAlpha * pulse * dimMul
+    }
+
+    // 5b. Subterranean Prologue "Sleepless Branches" Growth & Pruning Animation
+    const showPrologue = mode === 'prologue' || this.cameraY > 195
+    this.prologueLayer.visible = showPrologue
+    if (showPrologue) {
+      if (mode === 'prologue') {
+        this.prologueElapsedSec += dt
+      }
+      this.drawPrologueTreeAnimation(this.prologueElapsedSec, this.timeSec)
     }
 
     // 6. Update Tilt-Shift DoF RenderTexture (~30fps)
@@ -4397,6 +4458,161 @@ export class GalleryScene {
     }
     if (this.signHaloSprite) {
       this.signHaloSprite.alpha = (0.3 + Math.sin(t * 2.2) * 0.04) * dimMul
+    }
+  }
+
+  private drawPrologueTreeAnimation(elapsed: number, t: number): void {
+    const g = this.prologueAnimGfx
+    g.clear()
+
+    const cx = this.prologueTreeX
+    const baseY = 604
+    const p = Math.max(0, Math.min(1, elapsed / 13.5))
+    const seg = (start: number, end: number) => Math.max(0, Math.min(1, (p - start) / (end - start)))
+
+    // Stage 1: Seed awakening & discrete square wave ripples (0.0 .. 0.24)
+    const seedAlpha = Math.min(1, elapsed / 0.8)
+    const pulse = 0.5 + 0.5 * Math.sin(t * 3.4)
+    for (let r = 0; r < 2; r++) {
+      const wave = ((elapsed * 0.45 + r * 0.5) % 1)
+      const rad = Math.round(10 + wave * 34)
+      const wa = (1 - wave) * 0.28 * seedAlpha
+      g.rect(cx - rad, baseY - Math.round(rad * 0.35), rad * 2, 1).fill({ color: 0xf2c977, alpha: wa })
+    }
+    // Root tendrils spreading left & right
+    const rootSpan = Math.round(seg(0.02, 0.25) * 44)
+    if (rootSpan > 0) {
+      g.rect(cx - rootSpan, baseY + 2, rootSpan * 2, 2).fill({ color: 0x4d6b57, alpha: 0.75 * seedAlpha })
+      g.rect(cx - Math.round(rootSpan * 0.65), baseY + 5, Math.round(rootSpan * 1.3), 1).fill({
+        color: 0x3b5243,
+        alpha: 0.65 * seedAlpha,
+      })
+    }
+    // Glowing pixel seed core
+    g.rect(cx - 5, baseY - 6, 10, 8).fill({ color: 0xf2c977, alpha: (0.2 + 0.18 * pulse) * seedAlpha })
+    g.rect(cx - 3, baseY - 4, 6, 5).fill({ color: 0x6e987c, alpha: seedAlpha })
+    g.rect(cx - 2, baseY - 3, 4, 3).fill({ color: 0xffe89e, alpha: seedAlpha })
+
+    // Stage 2: Trunk & BFS branch growth (0.14 .. 0.58)
+    const trunkGrow = seg(0.12, 0.38)
+    if (trunkGrow > 0) {
+      const th = Math.round(trunkGrow * 66)
+      g.rect(cx - 2, baseY - 4 - th, 4, th).fill({ color: 0x6e987c, alpha: 0.92 })
+      g.rect(cx - 1, baseY - 4 - th, 1, th).fill({ color: 0xf2c977, alpha: 0.85 })
+    }
+
+    // Primary bifurcation at y = baseY - 70
+    const b1 = seg(0.32, 0.54)
+    if (b1 > 0) {
+      const span1 = Math.round(b1 * 38)
+      const rise1 = Math.round(b1 * 48)
+      g.rect(cx - span1, baseY - 70, span1 * 2, 2).fill({ color: 0x6e987c, alpha: 0.9 })
+      // Highlighted optimal path climbing up left-center branch
+      g.rect(cx - span1, baseY - 70, span1, 2).fill({ color: 0xf2c977, alpha: 0.85 })
+      if (rise1 > 0) {
+        g.rect(cx - span1, baseY - 70 - rise1, 2, rise1).fill({ color: 0xf2c977, alpha: 0.9 })
+        g.rect(cx + span1 - 2, baseY - 70 - rise1, 2, rise1).fill({ color: 0x8ab898, alpha: 0.88 })
+      }
+    }
+
+    // Upper crown bridge & sub-branches (0.50 .. 0.74)
+    const b2 = seg(0.48, 0.72)
+    if (b2 > 0) {
+      const span2 = Math.round(b2 * 56)
+      const rise2 = Math.round(b2 * 38)
+      g.rect(cx - 38 - Math.round(b2 * 18), baseY - 118, Math.round(b2 * 38), 2).fill({
+        color: 0x94c4a2,
+        alpha: 0.9,
+      })
+      g.rect(cx + 38 - Math.round(b2 * 18), baseY - 118, Math.round(b2 * 38), 2).fill({
+        color: 0x94c4a2,
+        alpha: 0.9,
+      })
+      if (rise2 > 0) {
+        g.rect(cx - 24, baseY - 118 - rise2, 2, rise2).fill({ color: 0xf2c977, alpha: 0.92 })
+        g.rect(cx + 22, baseY - 118 - rise2, 2, rise2).fill({ color: 0x8ab898, alpha: 0.88 })
+        g.rect(cx - Math.round(span2 * 0.42), baseY - 118 - rise2, Math.round(span2 * 0.84), 2).fill({
+          color: 0xf2c977,
+          alpha: 0.72,
+        })
+      }
+    }
+
+    // Stage 3: Pruned dead-end branches turning dark red and dissolving into quiet negative space (0.38 .. 0.82)
+    const pruneSpawn = seg(0.36, 0.56)
+    const pruneFade = seg(0.58, 0.86)
+    const pruneAlpha = pruneSpawn * (1 - pruneFade * 0.76)
+    if (pruneAlpha > 0.02) {
+      const prunedOffsets: Array<[number, number, number]> = [
+        [-32, -46, -18],
+        [24, -54, 22],
+        [-58, -94, -20],
+        [54, -98, 22],
+        [-14, -96, -10],
+      ]
+      for (const [ox, oy, dx] of prunedOffsets) {
+        const bx = cx + (dx > 0 ? Math.abs(ox) - dx : ox)
+        const by = baseY + oy
+        const len = Math.round(Math.abs(dx) * pruneSpawn)
+        g.rect(bx, by, len, 2).fill({ color: 0xa83c32, alpha: pruneAlpha * 0.88 })
+        // Hollow pruned node at tip + drifting cut embers
+        const tipX = dx > 0 ? bx + len : bx - 3
+        g.rect(tipX, by - 1, 4, 4).fill({ color: 0xd45848, alpha: pruneAlpha })
+        g.rect(tipX + 1, by, 2, 2).fill({ color: 0x16110e, alpha: pruneAlpha })
+        if (pruneFade > 0.05) {
+          const driftY = by - Math.round(pruneFade * 16)
+          g.rect(tipX + 1, driftY, 2, 2).fill({ color: 0xe07a6d, alpha: (1 - pruneFade) * 0.8 })
+        }
+      }
+    }
+
+    // State-space square nodes along cultivated path
+    const nodes: Array<[number, number, number, number]> = [
+      [cx, baseY - 36, 0.25, 0xf2c977],
+      [cx, baseY - 70, 0.36, 0xf2c977],
+      [cx - 38, baseY - 70, 0.45, 0xffe89e],
+      [cx + 38, baseY - 70, 0.48, 0x94c4a2],
+      [cx - 38, baseY - 118, 0.56, 0xffe89e],
+      [cx + 38, baseY - 118, 0.6, 0x94c4a2],
+      [cx - 24, baseY - 156, 0.7, 0xffe89e],
+      [cx + 22, baseY - 156, 0.72, 0xf4efe2],
+    ]
+    for (const [nx, ny, threshold, col] of nodes) {
+      const na = seg(threshold, threshold + 0.1)
+      if (na > 0) {
+        g.rect(nx - 3, ny - 3, 6, 6).fill({ color: col, alpha: na * 0.92 })
+        g.rect(nx - 1, ny - 1, 2, 2).fill({ color: 0xfff9e6, alpha: na })
+      }
+    }
+
+    // Stage 4: Blooming algorithmic blossoms & rising starlight spores (0.68 .. 1.0)
+    const bloom = seg(0.66, 0.95)
+    if (bloom > 0) {
+      const blossoms: Array<[number, number, number, number]> = [
+        [cx - 24, baseY - 160, 0xf2c977, 0.0],
+        [cx + 22, baseY - 160, 0xf4efe2, 0.9],
+        [cx, baseY - 172, 0xffe89e, 1.7],
+        [cx - 50, baseY - 124, 0xd45848, 2.4],
+        [cx + 50, baseY - 124, 0x94c4a2, 3.1],
+      ]
+      for (const [fx, fy, petalCol, ph] of blossoms) {
+        const s = Math.max(1, Math.round(bloom * 4))
+        const glow = (0.45 + 0.45 * (0.5 + 0.5 * Math.sin(t * 2.8 + ph))) * bloom
+        g.rect(fx - s - 2, fy - s - 2, (s + 2) * 2, (s + 2) * 2).fill({ color: petalCol, alpha: glow * 0.25 })
+        g.rect(fx - s, fy - 1, s * 2 + 1, 3).fill({ color: petalCol, alpha: bloom * 0.92 })
+        g.rect(fx - 1, fy - s, 3, s * 2 + 1).fill({ color: petalCol, alpha: bloom * 0.92 })
+        g.rect(fx - 1, fy - 1, 3, 3).fill({ color: 0xfff9e6, alpha: bloom })
+      }
+
+      // Gently ascending luminous spores drifting toward the gallery floor above
+      for (let i = 0; i < 16; i++) {
+        const cycle = (t * 0.18 + i * 0.137) % 1
+        const sx = cx + Math.round(Math.sin(i * 2.7 + t * 0.9) * 58)
+        const sy = Math.round(baseY - 40 - cycle * 195)
+        const sa = Math.sin(cycle * Math.PI) * bloom * 0.72
+        const col = i % 3 === 0 ? 0xffe89e : i % 3 === 1 ? 0x94c4a2 : 0xf4efe2
+        g.rect(sx, sy, 2, 2).fill({ color: col, alpha: sa })
+      }
     }
   }
 

@@ -1776,530 +1776,200 @@ textarea {
 }
 
 /* ==========================================================================
-   First Hall Prologue & Main Visual Modal (Cultivation & Pruning Palette)
-   Ivory: #f4efe2 | Dark Brown/Ink: #171310 / #261c16 | Dark Red: #a83c32
-   Sage Green: #6e987c / #8ab898 | Warm Yellow: #f2c977
+   Immersive Floating Prologue (No modal frame; subterranean Pixi tree + floating poem)
+   Ivory: #f4efe2 | Warm Yellow: #f2c977 | Sage Green: #8ab898 | Dark Red: #e07a6d
    ========================================================================== */
+
+.hud-overlay.immersive-prologue .top-reveal-zone {
+  opacity: 0;
+  pointer-events: none;
+}
 
 .prologue-modal {
   position: fixed;
   inset: 0;
   z-index: 36;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: radial-gradient(circle at 50% 45%, rgba(22, 17, 14, 0.68), rgba(10, 8, 7, 0.88));
-  backdrop-filter: blur(7px);
-  pointer-events: auto;
-  animation: fadeIn 0.24s ease;
+  pointer-events: none;
 }
 
 .prologue-modal.hidden {
   display: none;
 }
 
-.prologue-card {
-  width: min(1040px, 95vw);
-  max-height: min(680px, 90vh);
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  background: #171310;
-  border: 1px solid rgba(242, 201, 119, 0.42);
-  border-radius: 10px;
-  box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.85),
-    0 0 0 1px rgba(244, 239, 226, 0.08),
-    inset 0 1px 0 rgba(255, 240, 200, 0.16);
-  overflow: hidden;
-}
-
-.prologue-visual-col {
-  background: linear-gradient(180deg, #1f1915 0%, #15110e 100%);
-  border-right: 1px solid rgba(244, 239, 226, 0.12);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-}
-
-.prologue-visual-frame {
-  background: #f4efe2;
-  padding: 8px 8px 10px;
-  border-radius: 6px;
-  border: 2px solid #36261d;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.prologue-tree-img {
-  width: 100%;
-  max-width: 184px;
-  aspect-ratio: 64 / 94;
-  image-rendering: pixelated;
-  border: 1px solid #261c16;
-  background: #16110e;
-  display: block;
-}
-
-.prologue-visual-caption {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #261c16;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.prologue-visual-caption .caption-en {
-  font-size: 9.5px;
-  font-weight: 500;
-  color: #6e5a49;
-  letter-spacing: 0.04em;
-}
-
-.prologue-banner-card {
-  background: rgba(244, 239, 226, 0.06);
-  border: 1px solid rgba(242, 201, 119, 0.24);
-  border-radius: 6px;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.prologue-banner-img {
-  width: 100%;
-  image-rendering: pixelated;
-  border-radius: 3px;
-  border: 1px solid rgba(244, 239, 226, 0.2);
-  display: block;
-}
-
-.prologue-banner-labels {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  text-align: center;
-  font-size: 10px;
-  color: #e6decb;
-  letter-spacing: 0.04em;
-}
-
-.prologue-palette-legend {
-  background: rgba(12, 9, 8, 0.55);
-  border: 1px solid rgba(244, 239, 226, 0.1);
-  border-radius: 6px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.legend-title {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: #f2c977;
-  text-transform: uppercase;
-}
-
-.legend-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.legend-item {
+.prologue-floating-stage {
+  position: fixed;
+  inset: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-end;
+  padding: 40px clamp(32px, 6vw, 96px) 48px;
+  background: linear-gradient(
+    90deg,
+    rgba(6, 5, 5, 0) 0%,
+    rgba(6, 5, 5, 0.12) 42%,
+    rgba(8, 7, 6, 0.56) 72%,
+    rgba(8, 7, 6, 0.72) 100%
+  );
+  pointer-events: none;
+  transition: opacity 0.85s ease, transform 0.85s ease;
 }
 
-.legend-item .swatch {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  flex-shrink: 0;
+.prologue-floating-stage.fading-out {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
-.legend-item div {
+.prologue-floating-poem {
+  width: min(500px, 50vw);
   display: flex;
   flex-direction: column;
-  line-height: 1.25;
-}
-
-.legend-item strong {
-  font-size: 11px;
+  gap: 13px;
   color: #f4efe2;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.88), 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
-.legend-item span {
-  font-size: 10px;
-  color: #b4a896;
+.pf-beat {
+  opacity: 0;
+  transform: translateY(14px);
+  filter: blur(2px);
+  transition: opacity 0.95s ease, transform 0.95s cubic-bezier(0.22, 1, 0.36, 1), filter 0.95s ease;
 }
 
-.prologue-content-col {
-  padding: 20px 24px;
-  background: linear-gradient(165deg, #f4efe2 0%, #ebe3d0 100%);
-  color: #231a14;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
+.pf-beat.visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
 }
 
-.prologue-header {
-  border-bottom: 1px solid rgba(38, 28, 22, 0.14);
+.pf-title-block {
   padding-bottom: 10px;
+  border-bottom: 1px solid rgba(242, 201, 119, 0.28);
 }
 
-.prologue-eyebrow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
-}
-
-.unit-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #f4efe2;
-  background: #261c16;
-  border-radius: 3px;
-}
-
-.credit-pill {
-  display: inline-block;
-  padding: 2px 9px;
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #24382b;
-  background: rgba(110, 152, 124, 0.25);
-  border: 1px solid rgba(110, 152, 124, 0.55);
-  border-radius: 999px;
-}
-
-.prologue-header h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: #18120e;
-}
-
-.prologue-en {
-  margin-top: 2px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #6a5646;
-  letter-spacing: 0.03em;
-}
-
-.prologue-proposition {
-  margin: 0;
-  padding: 10px 14px;
-  background: #221914;
-  color: #f4efe2;
-  border-left: 4px solid #a83c32;
-  border-radius: 6px;
-  box-shadow: 0 4px 14px rgba(24, 18, 14, 0.12);
-}
-
-.prop-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+.pf-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.22em;
   color: #f2c977;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 
-.prologue-proposition p {
-  margin: 0 0 6px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff8e6;
-}
-
-.prop-pillars {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-size: 11px;
-  color: #9ec4aa;
-}
-
-.prologue-statement p {
+.pf-title-block h2 {
   margin: 0;
-  font-size: 12.5px;
-  line-height: 1.62;
-  color: #33261e;
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #fff8e8;
 }
 
-.prologue-dual-concepts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.concept-box {
-  padding: 10px 12px;
-  border-radius: 6px;
-  background: rgba(255, 252, 244, 0.72);
-  border: 1px solid rgba(38, 28, 22, 0.14);
-}
-
-.concept-box.cultivate {
-  border-top: 3px solid #6e987c;
-}
-
-.concept-box.prune {
-  border-top: 3px solid #a83c32;
-}
-
-.concept-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 5px;
-  flex-wrap: wrap;
-}
-
-.concept-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.concept-box.cultivate .concept-dot {
-  background: #6e987c;
-}
-
-.concept-box.prune .concept-dot {
-  background: #a83c32;
-}
-
-.concept-head strong {
-  font-size: 12px;
-  color: #1c1410;
-}
-
-.concept-tag {
-  margin-left: auto;
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: rgba(38, 28, 22, 0.08);
-  color: #5c493b;
-}
-
-.concept-box p {
-  margin: 0;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: #3d2e24;
-}
-
-.prologue-units {
-  background: rgba(38, 28, 22, 0.05);
-  border: 1px solid rgba(38, 28, 22, 0.12);
-  border-radius: 6px;
-  padding: 10px 12px;
-}
-
-.units-header {
+.pf-sub {
+  margin-top: 3px;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #544032;
-  margin-bottom: 7px;
-}
-
-.units-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-.unit-item {
-  background: rgba(255, 252, 245, 0.85);
-  border: 1px solid rgba(38, 28, 22, 0.12);
-  border-radius: 5px;
-  padding: 7px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.unit-item .u-num {
-  font-size: 10px;
-  font-weight: 700;
-  color: #a83c32;
-}
-
-.unit-item strong {
-  font-size: 11.5px;
-  color: #1e1611;
-}
-
-.unit-item p {
-  margin: 2px 0 0;
-  font-size: 10.5px;
-  line-height: 1.4;
-  color: #4f3e32;
-}
-
-.prologue-footer {
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid rgba(38, 28, 22, 0.14);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.prologue-epigraph {
-  font-size: 11.5px;
-  color: #4a392d;
-  flex: 1;
-  min-width: 240px;
-}
-
-.prologue-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.prologue-primary-btn {
-  padding: 8px 15px;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  color: #f4efe2;
-  background: linear-gradient(180deg, #5c876a 0%, #446950 100%);
-  border: 1px solid #2e4a37;
-  border-radius: 5px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(46, 74, 55, 0.3);
-  transition: filter 0.15s ease, transform 0.15s ease;
-}
-
-.prologue-primary-btn:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-
-.prologue-ghost-btn {
-  padding: 8px 13px;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  color: #261c16;
-  background: rgba(38, 28, 22, 0.08);
-  border: 1px solid rgba(38, 28, 22, 0.25);
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.prologue-ghost-btn:hover {
-  background: rgba(38, 28, 22, 0.15);
-}
-
-.prologue-card.poetic {
-  width: min(820px, 94vw);
-  grid-template-columns: 248px 1fr;
-}
-
-.prologue-seed-note {
-  margin-top: auto;
-  text-align: center;
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  color: rgba(244, 239, 226, 0.56);
-  padding: 6px 0 2px;
-}
-
-.poetic-sheet {
-  padding: 28px 34px 24px;
-  gap: 16px;
-}
-
-.poetic-head {
-  border-bottom: 1px solid rgba(38, 28, 22, 0.12);
-  padding-bottom: 12px;
-}
-
-.poetic-sub {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: #6b5848;
-}
-
-.poetic-head h2 {
-  margin-top: 4px;
-  font-size: 22px;
-  font-weight: 700;
   letter-spacing: 0.12em;
-  color: #1c1511;
+  color: rgba(244, 239, 226, 0.62);
 }
 
-.prologue-poem {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  font-size: 13.5px;
-  line-height: 1.88;
-  letter-spacing: 0.04em;
-  color: #2c211b;
-}
-
-.prologue-poem p {
+.pf-line {
   margin: 0;
+  font-size: clamp(12.5px, 1.15vw, 14px);
+  line-height: 1.85;
+  letter-spacing: 0.05em;
+  color: rgba(244, 239, 226, 0.92);
 }
 
-.prologue-poem .poem-lead {
-  font-size: 14.5px;
-  font-weight: 700;
-  color: #1a130f;
+.pf-lead {
+  font-size: clamp(14px, 1.3vw, 15.5px);
+  font-weight: 600;
+  color: #ffe89e;
 }
 
-.prologue-poem .poem-question {
+.pf-question {
   padding-left: 12px;
-  border-left: 2px solid #a83c32;
-  color: #7d2c24;
+  border-left: 2px solid #d45848;
+  color: #f09b8e;
   font-weight: 600;
 }
 
-.prologue-poem .poem-coda {
-  margin-top: 2px;
-  padding: 10px 14px;
-  background: rgba(110, 152, 124, 0.12);
+.pf-coda {
+  padding-left: 12px;
   border-left: 2px solid #6e987c;
-  border-radius: 4px;
-  color: #213026;
-  line-height: 1.82;
+  color: #cfe6d6;
+  line-height: 1.85;
+}
+
+.pf-dedication {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(242, 201, 119, 0.78);
+}
+
+.pf-progress-bar {
+  flex: 1;
+  height: 1px;
+  background: rgba(244, 239, 226, 0.18);
+  overflow: hidden;
+  position: relative;
+}
+
+.pf-progress-bar i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #6e987c, #f2c977);
+  transform-origin: left center;
+  animation: prologueProgress 15.8s linear forwards;
+}
+
+@keyframes prologueProgress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.pf-skip-hint {
+  position: fixed;
+  right: 26px;
+  bottom: 22px;
+  padding: 5px 12px;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: rgba(244, 239, 226, 0.68);
+  background: rgba(14, 12, 10, 0.42);
+  border: 1px solid rgba(242, 201, 119, 0.24);
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.pf-skip-hint:hover {
+  color: #ffe89e;
+  border-color: rgba(242, 201, 119, 0.65);
+  background: rgba(18, 15, 12, 0.72);
 }
 
 @media (max-width: 860px) {
-  .prologue-card {
-    grid-template-columns: 1fr;
+  .prologue-floating-stage {
+    justify-content: center;
+    align-items: flex-end;
+    padding: 24px 20px 56px;
+    background: linear-gradient(
+      180deg,
+      rgba(6, 5, 5, 0.08) 0%,
+      rgba(8, 7, 6, 0.66) 55%,
+      rgba(8, 7, 6, 0.85) 100%
+    );
   }
-  .units-grid {
-    grid-template-columns: 1fr 1fr;
+  .prologue-floating-poem {
+    width: min(560px, 92vw);
+    gap: 9px;
   }
 }
