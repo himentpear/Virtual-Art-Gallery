@@ -38,6 +38,7 @@ export class GalleryHud {
   private toastTimer?: number
   private topMenuHideTimer?: number
   private prologueTimers: number[] = []
+  private prologueAwaitingContinue = false
   private topMenuVisible = true
   private isPointerInTopArea = false
   private lastPromptHotspotId: string | null = null
@@ -322,6 +323,10 @@ export class GalleryHud {
     this.prologueTimers = []
   }
 
+  public isPrologueAwaitingContinue(): boolean {
+    return this.prologueAwaitingContinue
+  }
+
   public showPrologueModal(
     _treeDataUrl: string,
     _bannerDataUrl: string,
@@ -329,6 +334,7 @@ export class GalleryHud {
     _gateOpen: boolean,
   ): void {
     this.clearPrologueTimers()
+    this.prologueAwaitingContinue = false
     const visitorName = profile.name.trim() || '旅人'
 
     this.prologueModalEl.innerHTML = `
@@ -370,10 +376,15 @@ export class GalleryHud {
             <span>致驻足者 ${visitorName} · ${profile.passId}</span>
             <span class="pf-progress-bar"><i></i></span>
           </div>
+
+          <div class="pf-continue-prompt" data-role="prologue-continue">
+            <span class="pf-caret">▸</span>
+            <span>按任意键或点击屏幕继续 · 回正镜头</span>
+          </div>
         </div>
 
         <button type="button" class="pf-skip-hint" data-action="unlock-gate-explore">
-          [E / Esc / Enter] 回正镜头
+          [E / Esc / Enter] 跳过序章
         </button>
       </div>
     `
@@ -391,21 +402,24 @@ export class GalleryHud {
       this.prologueTimers.push(tid)
     })
 
-    // Begin soft fade at 14.9s and automatically return camera to normal gallery framing at 15.8s
+    // Once all lines are displayed, pause in an "awaiting any key / click to continue" state
     this.prologueTimers.push(
       window.setTimeout(() => {
-        stageEl?.classList.add('fading-out')
-      }, 14900),
+        this.prologueAwaitingContinue = true
+        stageEl?.classList.add('ready-to-continue')
+      }, 14200),
     )
-    this.prologueTimers.push(
-      window.setTimeout(() => {
-        this.callbacks.onUnlockGateAndExplore()
-      }, 15800),
-    )
+
+    stageEl?.addEventListener('click', (e) => {
+      if (!this.prologueAwaitingContinue) return
+      if ((e.target as HTMLElement).closest('[data-action="unlock-gate-explore"]')) return
+      this.callbacks.onUnlockGateAndExplore()
+    })
   }
 
   public hidePrologueModal(): void {
     this.clearPrologueTimers()
+    this.prologueAwaitingContinue = false
     this.prologueModalEl.classList.add('hidden')
     this.prologueModalEl.innerHTML = ''
   }

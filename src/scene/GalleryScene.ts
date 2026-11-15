@@ -3425,12 +3425,12 @@ export class GalleryScene {
   }
 
   private buildPrologueSubterraneanStage(): void {
-    const H = 320
+    const H = 420
     const surf = createPixelSurface(WORLD_WIDTH, H)
     const { ctx } = surf
     const rand = mulberry32(7421)
 
-    // Seamless vertical gradient below gallery floor (y = 358..678)
+    // Seamless vertical gradient below gallery floor (y = 358..778)
     for (let y = 0; y < H; y++) {
       const t = y / (H - 1)
       const col =
@@ -3449,12 +3449,12 @@ export class GalleryScene {
       }
     }
 
-    // Stratified soil & warm horizon hairline near bottom stage ground (local y = 248, world y = 606)
-    px(ctx, 0, 248, WORLD_WIDTH, 1, 'rgba(110, 152, 124, 0.24)')
-    px(ctx, 0, 250, WORLD_WIDTH, 70, 'rgba(10, 8, 7, 0.55)')
-    for (let i = 0; i < 180; i++) {
+    // Stratified soil & warm horizon hairline near bottom stage ground (local y = 300, world y = 658)
+    px(ctx, 0, 300, WORLD_WIDTH, 1, 'rgba(110, 152, 124, 0.24)')
+    px(ctx, 0, 302, WORLD_WIDTH, 118, 'rgba(10, 8, 7, 0.55)')
+    for (let i = 0; i < 210; i++) {
       const sx = Math.floor(rand() * WORLD_WIDTH)
-      const sy = 24 + Math.floor(rand() * 216)
+      const sy = 24 + Math.floor(rand() * 268)
       px(ctx, sx, sy, 1, 1, rand() > 0.55 ? 'rgba(242, 201, 119, 0.08)' : 'rgba(110, 152, 124, 0.09)')
     }
 
@@ -3988,7 +3988,7 @@ export class GalleryScene {
       this.prologueElapsedSec = 0
       const targetX = hotspot ? hotspot.x : heroX
       this.focusX = Math.max(SCENE_WIDTH * 0.5, Math.min(WORLD_WIDTH - SCENE_WIDTH * 0.5, targetX))
-      this.focusY = 492
+      this.focusY = 560
       this.focusZoom = 1.0
       this.prologueTreeX = Math.round(this.focusX - 138)
       this.dofBlurFilter.strength = 0.4
@@ -4050,7 +4050,7 @@ export class GalleryScene {
 
     const halfW = (SCENE_WIDTH * 0.5) / rawZoom
     const halfH = (SCENE_HEIGHT * 0.5) / rawZoom
-    const maxCamY = mode === 'prologue' ? 678 - halfH : SCENE_HEIGHT - halfH
+    const maxCamY = mode === 'prologue' ? 778 - halfH : SCENE_HEIGHT - halfH
     this.cameraTargetZoom = rawZoom
     this.cameraTargetX = Math.max(halfW, Math.min(WORLD_WIDTH - halfW, rawX))
     this.cameraTargetY = Math.max(halfH, Math.min(maxCamY, rawY))
@@ -4466,7 +4466,7 @@ export class GalleryScene {
     g.clear()
 
     const cx = this.prologueTreeX
-    const baseY = 604
+    const baseY = 656
     const p = Math.max(0, Math.min(1, elapsed / 13.5))
     const seg = (start: number, end: number) => Math.max(0, Math.min(1, (p - start) / (end - start)))
 

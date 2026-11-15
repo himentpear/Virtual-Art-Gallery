@@ -1920,7 +1920,7 @@ textarea {
   height: 100%;
   background: linear-gradient(90deg, #6e987c, #f2c977);
   transform-origin: left center;
-  animation: prologueProgress 15.8s linear forwards;
+  animation: prologueProgress 14.2s linear forwards;
 }
 
 @keyframes prologueProgress {
@@ -1930,6 +1930,51 @@ textarea {
   to {
     transform: scaleX(1);
   }
+}
+
+.prologue-floating-stage.ready-to-continue {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.pf-continue-prompt {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: #ffe89e;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+  pointer-events: none;
+}
+
+.prologue-floating-stage.ready-to-continue .pf-continue-prompt {
+  opacity: 1;
+  transform: translateY(0);
+  animation: prologuePromptPulse 2.1s ease-in-out infinite;
+}
+
+.pf-caret {
+  color: #8ab898;
+  font-size: 13px;
+}
+
+@keyframes prologuePromptPulse {
+  0%,
+  100% {
+    opacity: 0.96;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.prologue-floating-stage.ready-to-continue .pf-skip-hint {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .pf-skip-hint {

@@ -300,6 +300,25 @@ async function main() {
       e.preventDefault()
     }
 
+    if (mode === 'prologue' && hud.isPrologueAwaitingContinue()) {
+      const modifierCodes = [
+        'ShiftLeft',
+        'ShiftRight',
+        'ControlLeft',
+        'ControlRight',
+        'AltLeft',
+        'AltRight',
+        'MetaLeft',
+        'MetaRight',
+        'CapsLock',
+      ]
+      if (!modifierCodes.includes(e.code)) {
+        e.preventDefault()
+        unlockGateAndExplore()
+      }
+      return
+    }
+
     if (e.code === 'Escape') {
       if (mode === 'register') {
         if (hasEnteredGallery) {
