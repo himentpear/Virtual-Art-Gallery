@@ -2,6 +2,10 @@ import type { ArtworkId, ArtworkInspectionData } from '../types'
 import { bayer4, createPixelSurface, lerpColor, mulberry32, px } from './PixelCanvasBuilder'
 
 export interface GeneratedArtworks {
+  prologueTreeCanvas: HTMLCanvasElement
+  prologueBannerCanvas: HTMLCanvasElement
+  prologueTreeDataUrl: string
+  prologueBannerDataUrl: string
   centerCanvas: HTMLCanvasElement
   leftCanvas: HTMLCanvasElement
   rightCanvas: HTMLCanvasElement
@@ -729,7 +733,227 @@ function paintEastAlchemySidePainting(): HTMLCanvasElement {
   return surf.canvas
 }
 
+/**
+ * First Hall Main Visual: "生长中的算法树" (The Growing Algorithmic Tree, 64x94 px)
+ * Palette from Section 6.2:
+ * - Ivory White (#f4efe2)
+ * - Dark Brown & Ink Black (#16110e, #261c16)
+ * - Dark Red (#a83c32, #d45848) for robotics & pruned states
+ * - Sage Green (#6e987c, #94c4a2) for cultivation & organic branches
+ * - Warm Yellow (#f2c977, #ffe89e) for seed core, optimal path & shadow stage
+ */
+function paintAlgorithmicTreeMasterpiece(): HTMLCanvasElement {
+  const W = 64
+  const H = 94
+  const surf = createPixelSurface(W, H)
+  const { ctx } = surf
+
+  // 1. Deep ink-brown background with subtle ivory grid dots (discrete state space)
+  for (let y = 0; y < H; y++) {
+    const t = y / (H - 1)
+    const bg = lerpColor([20, 16, 14], [38, 28, 22], t)
+    px(ctx, 0, y, W, 1, bg)
+  }
+  // Inner ivory border hairline
+  px(ctx, 2, 2, W - 4, 1, 'rgba(244, 239, 226, 0.22)')
+  px(ctx, 2, H - 3, W - 4, 1, 'rgba(244, 239, 226, 0.22)')
+  px(ctx, 2, 2, 1, H - 4, 'rgba(244, 239, 226, 0.18)')
+  px(ctx, W - 3, 2, 1, H - 4, 'rgba(244, 239, 226, 0.18)')
+
+  // Subtle state-space grid intersections
+  for (let gy = 8; gy < H - 10; gy += 8) {
+    for (let gx = 8; gx < W - 6; gx += 8) {
+      px(ctx, gx, gy, 1, 1, 'rgba(244, 239, 226, 0.09)')
+    }
+  }
+
+  // Top header ornament (Ivory + Warm Yellow emblem)
+  px(ctx, 22, 5, 20, 1, '#b89a64')
+  px(ctx, 28, 4, 8, 1, '#f4efe2')
+
+  // 2. Bottom Soil Plinth & Glowing Pixel Seed (y = 74..90, x = 32)
+  px(ctx, 8, 84, 48, 6, '#140f0c')
+  px(ctx, 12, 82, 40, 2, '#3b2b20')
+  px(ctx, 18, 81, 28, 1, '#6e987c')
+  // Root network in sage green & dark brown
+  px(ctx, 24, 83, 16, 1, '#587d65')
+  px(ctx, 20, 85, 6, 1, '#44614e')
+  px(ctx, 38, 85, 6, 1, '#44614e')
+  // Glowing seed core at (30..34, 75..80)
+  px(ctx, 28, 74, 8, 7, 'rgba(242, 201, 119, 0.22)')
+  px(ctx, 29, 75, 6, 5, '#6e987c')
+  px(ctx, 30, 76, 4, 4, '#f2c977')
+  px(ctx, 31, 77, 2, 2, '#fff8de')
+
+  // 3. Pruned Branches (fading dark red #a83c32 / #682822 with terminal 'x' / hollow nodes)
+  // Left low pruned branch
+  px(ctx, 22, 66, 9, 1, '#7a2e28')
+  px(ctx, 16, 61, 6, 1, '#632420')
+  px(ctx, 16, 62, 1, 4, '#632420')
+  px(ctx, 13, 59, 3, 3, '#8c352d')
+  px(ctx, 14, 60, 1, 1, '#1c1512') // hollow pruned node
+  // Right low pruned branch
+  px(ctx, 33, 64, 10, 1, '#7a2e28')
+  px(ctx, 43, 58, 1, 7, '#632420')
+  px(ctx, 43, 58, 6, 1, '#521e1b')
+  px(ctx, 48, 56, 3, 3, '#9e3b32')
+  px(ctx, 49, 57, 1, 1, '#1c1512')
+  // Mid-center pruned dead-end state
+  px(ctx, 31, 48, 1, 8, '#7a2e28')
+  px(ctx, 30, 45, 4, 3, '#a83c32')
+  px(ctx, 31, 46, 2, 1, '#261c16')
+
+  // 4. Cultivated Main Trunk & Optimal BFS Search Edges (Sage Green + Warm Yellow)
+  // Trunk rising from seed (31..32, 56..75)
+  px(ctx, 31, 56, 2, 19, '#6e987c')
+  px(ctx, 31, 60, 1, 15, '#94c4a2')
+  px(ctx, 32, 62, 1, 12, '#f2c977') // optimal path gold trace
+
+  // Primary bifurcation at y = 55
+  px(ctx, 20, 55, 24, 2, '#6e987c')
+  px(ctx, 21, 55, 22, 1, '#f2c977')
+  // Left main branch rising to y = 36
+  px(ctx, 20, 36, 2, 20, '#6e987c')
+  px(ctx, 20, 38, 1, 17, '#f2c977')
+  // Right main branch rising to y = 36
+  px(ctx, 42, 36, 2, 20, '#6e987c')
+  px(ctx, 43, 38, 1, 17, '#94c4a2')
+
+  // Secondary branches & BFS state nodes (squares)
+  const stateNodes: Array<[number, number, string, string]> = [
+    [30, 66, '#f2c977', '#fff6d6'],
+    [30, 54, '#94c4a2', '#f4efe2'],
+    [19, 54, '#f2c977', '#fff6d6'],
+    [41, 54, '#94c4a2', '#f4efe2'],
+    [19, 43, '#f2c977', '#fff6d6'],
+    [41, 43, '#f2c977', '#fff6d6'],
+  ]
+  for (const [nx, ny, borderCol, coreCol] of stateNodes) {
+    px(ctx, nx, ny, 4, 4, borderCol)
+    px(ctx, nx + 1, ny + 1, 2, 2, coreCol)
+  }
+
+  // Upper-middle pruned sub-branches
+  px(ctx, 11, 44, 8, 1, '#8c352d')
+  px(ctx, 9, 43, 3, 3, '#a83c32')
+  px(ctx, 45, 44, 8, 1, '#8c352d')
+  px(ctx, 52, 43, 3, 3, '#a83c32')
+
+  // 5. Left Canopy: Exhibit A "咔哒！全体出发" (Clockwork Robot, Arrows & Grid, x = 7..29, y = 12..36)
+  // Canopy foliage backdrop in sage green & warm brown
+  px(ctx, 8, 14, 22, 20, 'rgba(110, 152, 124, 0.16)')
+  px(ctx, 9, 15, 20, 18, '#23201b')
+  px(ctx, 9, 15, 20, 1, '#a83c32')
+  px(ctx, 9, 32, 20, 1, '#6e987c')
+  px(ctx, 9, 15, 1, 18, '#a83c32')
+  px(ctx, 28, 15, 1, 18, '#6e987c')
+  // Mini 3x3 puzzle board grid lines
+  for (let gx = 13; gx <= 25; gx += 4) px(ctx, gx, 17, 1, 14, '#38302a')
+  for (let gy = 19; gy <= 29; gy += 4) px(ctx, 11, gy, 16, 1, '#38302a')
+  // Clockwork Robot icon (center-left of mini board)
+  px(ctx, 18, 17, 2, 2, '#f2c977') // antenna
+  px(ctx, 15, 19, 8, 7, '#b84a39') // robot head/chassis in dark red
+  px(ctx, 16, 20, 6, 5, '#d46552')
+  px(ctx, 17, 21, 1, 2, '#fff8de') // left eye
+  px(ctx, 20, 21, 1, 2, '#fff8de') // right eye
+  // Synchronized direction arrow glyph (→) in warm yellow
+  px(ctx, 12, 28, 8, 1, '#f2c977')
+  px(ctx, 18, 27, 1, 3, '#f2c977')
+  // Target tile highlight
+  px(ctx, 23, 27, 3, 3, '#8ab898')
+  px(ctx, 24, 28, 1, 1, '#f4efe2')
+
+  // 6. Right Canopy: Exhibit B "啪嗒！影子剧院" (Shadow Puppet, Projection Cone & Stage, x = 35..56, y = 12..36)
+  px(ctx, 34, 14, 22, 20, 'rgba(242, 201, 119, 0.14)')
+  px(ctx, 35, 15, 20, 18, '#1e1916')
+  px(ctx, 35, 15, 20, 1, '#f2c977')
+  px(ctx, 35, 32, 20, 1, '#6e987c')
+  px(ctx, 35, 15, 1, 18, '#6e987c')
+  px(ctx, 54, 15, 1, 18, '#f2c977')
+  // Diagonal projection light beam across stage
+  for (let d = 0; d < 12; d++) {
+    px(ctx, 38 + d, 18 + Math.floor(d * 0.8), 6, 2, 'rgba(242, 201, 119, 0.28)')
+  }
+  // Ivory paper-puppet silhouette at upper-left of stage
+  px(ctx, 38, 18, 3, 3, '#f4efe2') // head
+  px(ctx, 37, 21, 5, 4, '#d9cfb8') // torso/cape
+  // Projected dark shadow figure + matching convergence star at bottom-right
+  px(ctx, 47, 24, 3, 6, '#120e0c')
+  px(ctx, 46, 29, 5, 2, '#a83c32')
+  px(ctx, 48, 28, 2, 2, '#ffe89e') // shadow convergence spark
+
+  // Bridge arc connecting both canopies into a unified crown (y = 9..13)
+  px(ctx, 20, 10, 24, 1, '#8ab898')
+  px(ctx, 26, 8, 12, 1, '#f2c977')
+  px(ctx, 30, 7, 4, 4, '#f2c977')
+  px(ctx, 31, 8, 2, 2, '#fff8de')
+
+  return surf.canvas
+}
+
+/**
+ * First Hall Left Alcove Banner: "从种子到花园 · 四单元导览图谱" (68x34 px)
+ * Ivory parchment background (#efe8d6) with 4 stages: 播种 -> 修剪 -> 栽培 -> 开花
+ */
+function paintPrologueFlowBanner(): HTMLCanvasElement {
+  const W = 68
+  const H = 34
+  const surf = createPixelSurface(W, H)
+  const { ctx } = surf
+
+  // Ivory parchment base + dark brown frame border
+  px(ctx, 0, 0, W, H, '#241b15')
+  px(ctx, 1, 1, W - 2, H - 2, '#eae1cd')
+  px(ctx, 2, 2, W - 4, H - 4, '#f4efe2')
+  // Top & bottom subtle rule lines in dark red & sage green
+  px(ctx, 4, 4, W - 8, 1, '#a83c32')
+  px(ctx, 4, H - 5, W - 8, 1, '#6e987c')
+
+  // 4 Stage Medallions across x = 6..62 (each 12x16 at y = 8..24)
+  const stagesX = [6, 21, 36, 51]
+  for (let i = 0; i < 4; i++) {
+    const sx = stagesX[i]
+    px(ctx, sx, 8, 11, 16, '#261c16')
+    px(ctx, sx + 1, 9, 9, 14, '#1b1511')
+    if (i < 3) {
+      // Connecting arrow between stages
+      px(ctx, sx + 11, 15, 4, 2, '#b88c4a')
+    }
+  }
+
+  // Stage 1 (播种): Warm Yellow Seed + Sprout
+  px(ctx, 10, 18, 3, 3, '#f2c977')
+  px(ctx, 11, 14, 1, 4, '#6e987c')
+  px(ctx, 9, 14, 2, 1, '#8ab898')
+  px(ctx, 12, 13, 2, 1, '#8ab898')
+
+  // Stage 2 (修剪): BFS Branching + Dark Red Pruned Cut
+  px(ctx, 26, 17, 1, 5, '#8ab898')
+  px(ctx, 24, 14, 5, 1, '#8ab898')
+  px(ctx, 24, 11, 1, 3, '#f2c977')
+  px(ctx, 28, 11, 1, 3, '#c85244') // pruned red branch
+  px(ctx, 27, 11, 3, 1, '#c85244')
+
+  // Stage 3 (栽培): Level Grid + Creator Cursor
+  for (let gx = 38; gx <= 44; gx += 3) px(ctx, gx, 11, 1, 10, '#4a3d33')
+  for (let gy = 11; gy <= 20; gy += 3) px(ctx, 38, gy, 7, 1, '#4a3d33')
+  px(ctx, 39, 15, 2, 2, '#6e987c')
+  px(ctx, 42, 12, 2, 2, '#f2c977')
+
+  // Stage 4 (开花): Blossoming Algorithmic Garden Flower
+  px(ctx, 56, 16, 1, 6, '#6e987c')
+  px(ctx, 54, 17, 2, 1, '#8ab898')
+  px(ctx, 57, 18, 2, 1, '#8ab898')
+  px(ctx, 54, 11, 5, 5, '#c85244')
+  px(ctx, 55, 12, 3, 3, '#f2c977')
+  px(ctx, 56, 13, 1, 1, '#fff8de')
+
+  return surf.canvas
+}
+
 export function generateAllArtworks(): GeneratedArtworks {
+  const prologueTreeCanvas = paintAlgorithmicTreeMasterpiece()
+  const prologueBannerCanvas = paintPrologueFlowBanner()
   const center = paintCenterMasterpiece()
   const leftCanvas = paintLeftBridgePainting()
   const rightCanvas = paintRightDuskPainting()
@@ -741,6 +965,10 @@ export function generateAllArtworks(): GeneratedArtworks {
   const eastRightCanvas = paintEastAlchemySidePainting()
 
   return {
+    prologueTreeCanvas,
+    prologueBannerCanvas,
+    prologueTreeDataUrl: toUpscaledDataUrl(prologueTreeCanvas, 4),
+    prologueBannerDataUrl: toUpscaledDataUrl(prologueBannerCanvas, 4),
     centerCanvas: center.canvas,
     leftCanvas,
     rightCanvas,

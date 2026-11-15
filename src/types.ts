@@ -133,6 +133,7 @@ export type HotspotId =
   | ArtworkId
   | 'entrance_reception'
   | 'entrance_kiosk'
+  | 'entrance_prologue_tree'
   | 'left_bench'
   | 'right_bench'
   | 'west_bench'
@@ -185,6 +186,7 @@ export interface CharacterLightSample {
 export type ActiveMode =
   | 'register'
   | 'explore'
+  | 'prologue'
   | 'gaze_center'
   | 'inspect_artwork'
   | 'sit_bench'

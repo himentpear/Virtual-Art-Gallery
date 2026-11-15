@@ -73,6 +73,9 @@ async function main() {
     mode = nextMode
     hero.controlsLocked = nextMode !== 'explore'
     if (nextMode !== 'explore') hero.clearInputs()
+    if (nextMode !== 'prologue') {
+      hud.hidePrologueModal()
+    }
     if (nextMode !== 'wardrobe' && wardrobePanel.isOpen()) {
       wardrobePanel.close()
     }
@@ -80,6 +83,28 @@ async function main() {
       registrationOverlay.closeWithFade()
     }
     gallery.setCameraFocus(nextMode, hotspot, hero.x)
+  }
+
+  const openPrologue = (spot: Hotspot | null = null) => {
+    setMode('prologue', spot)
+    hud.showPrologueModal(
+      artworks.prologueTreeDataUrl,
+      artworks.prologueBannerDataUrl,
+      visitorProfile,
+      gallery.isEntranceGateOpen(),
+    )
+  }
+
+  const unlockGateAndExplore = () => {
+    const wasOpen = gallery.isEntranceGateOpen()
+    gallery.setEntranceGateOpen(true)
+    setMode('explore')
+    hero.playPreviewClip('idle')
+    if (!wasOpen) {
+      hud.showToast(`通行证 ${visitorProfile.passId} 已核验 · 初始栽培值 Credit +100 已激活 · 前方展厅闸门已开启`)
+    } else {
+      hud.showToast('已返回种子大厅 · 向右漫步即可进入后续展区')
+    }
   }
 
   const toggleWardrobe = () => {
@@ -133,6 +158,15 @@ async function main() {
   const hud = new GalleryHud({
     onToggleWardrobe: toggleWardrobe,
     onOpenRegistration: openRegistration,
+    onOpenPrologue: () => {
+      if (mode === 'prologue') {
+        setMode('explore')
+      } else {
+        openPrologue()
+      }
+    },
+    onClosePrologue: () => setMode('explore'),
+    onUnlockGateAndExplore: unlockGateAndExplore,
     onToggleAlwaysRun: () => {
       hero.alwaysRun = !hero.alwaysRun
       hud.showToast(hero.alwaysRun ? '已开启常驻奔跑（按住 Shift 步行）' : '已切回步行模式（按住 Shift 奔跑）')
@@ -207,11 +241,11 @@ async function main() {
     } else if (spot.id === 'east_bench') {
       hero.sitAt(2240, 323, 'left')
       setMode('sit_bench', spot)
-    } else if (spot.id === 'entrance_reception') {
-      hud.showToast(`前台已核验通行证 ${visitorProfile.passId}（${visitorProfile.name || '贵宾'}）· 按 U 可重新登记与换装`)
+    } else if (spot.id === 'entrance_reception' || spot.id === 'entrance_prologue_tree') {
+      openPrologue(spot)
     } else if (spot.id === 'entrance_kiosk') {
       gallery.setEntranceGateOpen(true)
-      hud.showToast('电子门票核验通过 · 检票闸门已为您开启')
+      hud.showToast(`通行证 ${visitorProfile.passId} 核验通过 · 初始栽培值 Credit +100 · 检票闸门已为您开启`)
     } else if (spot.id === 'wardrobe_mirror') {
       toggleWardrobe()
     }
@@ -254,8 +288,10 @@ async function main() {
       e.repeat &&
       (e.code === 'KeyE' ||
         e.code === 'KeyC' ||
+        e.code === 'KeyI' ||
         e.code === 'KeyU' ||
         e.code === 'KeyP' ||
+        e.code === 'Enter' ||
         e.code === 'Escape')
     ) {
       return
@@ -287,6 +323,20 @@ async function main() {
     }
 
     if (mode === 'register') {
+      return
+    }
+
+    if (mode === 'prologue' && e.code === 'Enter') {
+      unlockGateAndExplore()
+      return
+    }
+
+    if (e.code === 'KeyI') {
+      if (mode === 'prologue') {
+        setMode('explore')
+      } else {
+        openPrologue()
+      }
       return
     }
 

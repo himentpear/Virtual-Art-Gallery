@@ -107,11 +107,11 @@ export const LIGHTING_PRESETS: Record<LightingPresetId, LightingPreset> = {
 }
 
 export const GALLERY_HOTSPOTS: Hotspot[] = [
-  // Entrance Lobby (x = 0..640)
+  // Entrance Lobby / Seed Hall (x = 0..640)
   {
     id: 'entrance_reception',
-    label: '展厅服务台 · 导览手册',
-    promptText: '[E] 咨询导览',
+    label: '序章导览台 · 《栽培与剪枝》策展导言',
+    promptText: '[E] 阅读展览导言',
     x: 132,
     y: 284,
     radius: 46,
@@ -120,12 +120,22 @@ export const GALLERY_HOTSPOTS: Hotspot[] = [
   },
   {
     id: 'entrance_kiosk',
-    label: '自助取票终端',
-    promptText: '[E] 核验门票',
+    label: '种子大厅终端 · 通行证核验与初始 Credit',
+    promptText: '[E] 核验门票开启闸门',
     x: 474,
     y: 284,
     radius: 42,
     hintY: 186,
+    wing: 'entrance',
+  },
+  {
+    id: 'entrance_prologue_tree',
+    label: '序章主视觉 · 《生长中的算法树》',
+    promptText: '[E] 观赏主视觉与导言',
+    x: 546,
+    y: 284,
+    radius: 48,
+    hintY: 202,
     wing: 'entrance',
   },
 
@@ -1096,16 +1106,26 @@ export class GalleryScene {
       px(ctx, 79, 196, 5, 9, '#8b6851')
       px(ctx, 85, 193, 4, 12, '#dfd4be')
 
-      // Framed landscape artwork inside alcove + warm radial wash + twin-arm brass picture lamp
+      // Framed "From Seed to Garden" 4-Unit Prologue Flow Banner inside alcove + warm radial wash + twin-arm brass picture lamp
       const artGlow = ctx.createRadialGradient(140, 184, 6, 140, 184, 44)
-      artGlow.addColorStop(0, 'rgba(255, 200, 122, 0.24)')
-      artGlow.addColorStop(1, 'rgba(255, 176, 88, 0)')
+      artGlow.addColorStop(0, 'rgba(242, 201, 119, 0.28)')
+      artGlow.addColorStop(1, 'rgba(110, 152, 124, 0)')
       ctx.fillStyle = artGlow
       ctx.fillRect(96, 150, 88, 72)
-      px(ctx, 102, 166, 76, 42, '#0d0b0c')
-      px(ctx, 104, 168, 72, 38, '#3b2e24')
-      px(ctx, 105, 169, 70, 36, '#755a3b')
-      ctx.drawImage(this.artworks.rightCanvas, 0, 0, this.artworks.rightCanvas.width, this.artworks.rightCanvas.height, 106, 170, 68, 34)
+      px(ctx, 102, 166, 76, 42, '#14100e')
+      px(ctx, 104, 168, 72, 38, '#3b2b20')
+      px(ctx, 105, 169, 70, 36, '#f4efe2')
+      ctx.drawImage(
+        this.artworks.prologueBannerCanvas,
+        0,
+        0,
+        this.artworks.prologueBannerCanvas.width,
+        this.artworks.prologueBannerCanvas.height,
+        106,
+        170,
+        68,
+        34,
+      )
       px(ctx, 138, 154, 4, 4, '#47392c')
       px(ctx, 125, 158, 30, 3, '#685239')
       px(ctx, 127, 160, 26, 1, '#ffe4a8')
@@ -1184,26 +1204,28 @@ export class GalleryScene {
       px(ctx, 214, 136, 212, 136, '#141923')
       ctx.clearRect(218, 141, 204, 131)
 
-      // Suspended Overhead Illuminated Signboard (Ticket | Museum ->)
+      // Suspended Overhead Illuminated Signboard (Seed Sprout | Algorithmic Tree ->)
       px(ctx, 272, 34, 2, 66, '#1c202a')
       px(ctx, 366, 34, 2, 66, '#1c202a')
-      px(ctx, 250, 100, 140, 24, '#0c0f17')
-      px(ctx, 250, 100, 140, 1, '#d8ae62')
-      px(ctx, 250, 123, 140, 1, '#9f7d40')
+      px(ctx, 250, 100, 140, 24, '#14100e')
+      px(ctx, 250, 100, 140, 1, '#f2c977')
+      px(ctx, 250, 123, 140, 1, '#6e987c')
       px(ctx, 250, 100, 1, 24, '#b5904d')
       px(ctx, 389, 100, 1, 24, '#b5904d')
-      // Left ticket glyph
-      px(ctx, 279, 107, 18, 10, '#ffd080')
-      px(ctx, 281, 109, 14, 6, '#0c0f17')
-      px(ctx, 286, 110, 4, 4, '#ffd080')
-      // Center divider
-      px(ctx, 320, 105, 1, 14, '#705d3f')
-      // Right museum temple glyph + arrow
-      px(ctx, 336, 107, 14, 2, '#ffd080')
-      px(ctx, 338, 109, 2, 6, '#ffd080')
-      px(ctx, 342, 109, 2, 6, '#ffd080')
-      px(ctx, 346, 109, 2, 6, '#ffd080')
-      px(ctx, 335, 115, 16, 2, '#ffd080')
+      // Left seed + sage-green sprout glyph
+      px(ctx, 276, 106, 22, 12, '#1f1814')
+      px(ctx, 285, 113, 4, 4, '#f2c977')
+      px(ctx, 286, 109, 2, 4, '#6e987c')
+      px(ctx, 282, 109, 4, 2, '#8ab898')
+      px(ctx, 288, 108, 4, 2, '#8ab898')
+      // Center dark-red & gold divider
+      px(ctx, 320, 105, 1, 14, '#a83c32')
+      // Right algorithmic tree node + arrow glyph
+      px(ctx, 336, 107, 14, 2, '#f4efe2')
+      px(ctx, 338, 109, 2, 6, '#6e987c')
+      px(ctx, 342, 109, 2, 6, '#f2c977')
+      px(ctx, 346, 109, 2, 6, '#a83c32')
+      px(ctx, 335, 115, 16, 2, '#f2c977')
       px(ctx, 357, 111, 10, 2, '#ffd080')
       px(ctx, 363, 109, 2, 6, '#ffd080')
       px(ctx, 365, 110, 2, 4, '#ffd080')
@@ -1275,12 +1297,53 @@ export class GalleryScene {
       px(ctx, 459, 267, 30, 5, '#131720')
       px(ctx, 459, 267, 30, 1, '#485266')
 
-      // Framed Feature Poster (Floating Sky Castle)
-      px(ctx, 514, 134, 64, 94, '#0d0e14')
-      px(ctx, 516, 136, 60, 90, '#2a221b')
-      ctx.drawImage(this.artworks.centerCanvas, 0, 0, this.artworks.centerCanvas.width, this.artworks.centerCanvas.height, 518, 138, 56, 86)
-      px(ctx, 532, 126, 28, 3, '#3b3026')
-      px(ctx, 534, 128, 24, 1, '#ffd088')
+      // First Hall Main Visual Feature Wall: "生长中的算法树" (The Growing Algorithmic Tree) + Prologue Lectern
+      const treeWallGlow = ctx.createRadialGradient(546, 180, 8, 546, 180, 62)
+      treeWallGlow.addColorStop(0, 'rgba(242, 201, 119, 0.26)')
+      treeWallGlow.addColorStop(0.55, 'rgba(110, 152, 124, 0.14)')
+      treeWallGlow.addColorStop(1, 'rgba(20, 16, 14, 0)')
+      ctx.fillStyle = treeWallGlow
+      ctx.fillRect(496, 118, 100, 140)
+
+      // Outer dark-walnut & ink-black museum shadowbox frame + ivory matting
+      px(ctx, 511, 131, 70, 100, '#120e0c')
+      px(ctx, 513, 133, 66, 96, '#36261d')
+      px(ctx, 515, 135, 62, 92, '#f4efe2') // ivory museum mat border
+      px(ctx, 517, 137, 58, 88, '#1a1411')
+      // Corner accents in dark red (pruning) & sage green (cultivation)
+      px(ctx, 513, 133, 4, 2, '#a83c32')
+      px(ctx, 575, 133, 4, 2, '#6e987c')
+      px(ctx, 513, 227, 4, 2, '#6e987c')
+      px(ctx, 575, 227, 4, 2, '#a83c32')
+      ctx.drawImage(
+        this.artworks.prologueTreeCanvas,
+        0,
+        0,
+        this.artworks.prologueTreeCanvas.width,
+        this.artworks.prologueTreeCanvas.height,
+        518,
+        138,
+        56,
+        86,
+      )
+      // Overhead brass picture lamp casting warm yellow wash
+      px(ctx, 544, 122, 4, 4, '#3b2d22')
+      px(ctx, 530, 125, 32, 3, '#6e553b')
+      px(ctx, 532, 127, 28, 1, '#ffe59e')
+
+      // Prologue Curatorial Statement Lectern below the main visual (x = 516..576, y = 235..270)
+      px(ctx, 516, 235, 60, 16, '#1a1411')
+      px(ctx, 517, 236, 58, 14, '#f4efe2') // ivory statement card
+      px(ctx, 519, 238, 16, 2, '#a83c32') // dark red header bar
+      px(ctx, 537, 238, 22, 2, '#6e987c') // sage green sub bar
+      px(ctx, 519, 242, 52, 1, '#3a2e25')
+      px(ctx, 519, 245, 46, 1, '#59493d')
+      px(ctx, 519, 247, 36, 1, '#7a6758')
+      // Walnut lectern pedestal + warm brass base trim
+      px(ctx, 542, 251, 8, 16, '#261b14')
+      px(ctx, 544, 251, 4, 16, '#3d2c21')
+      px(ctx, 532, 267, 28, 3, '#17110e')
+      px(ctx, 534, 267, 24, 1, '#c89b52')
 
       // Inner Timber Columns + 1F Potted Trees
       drawColumn(o + 194, 12, true, true)
@@ -3874,6 +3937,12 @@ export class GalleryScene {
       this.focusY = 232
       this.focusZoom = 1.44
       this.dofBlurFilter.strength = 3.2
+    } else if (mode === 'prologue') {
+      this.patrolActive = false
+      this.focusX = hotspot ? hotspot.x : 340
+      this.focusY = 186
+      this.focusZoom = 1.34
+      this.dofBlurFilter.strength = 2.8
     } else if (mode === 'gaze_center') {
       this.patrolActive = false
       const cx = hotspot ? hotspot.x : WING_CENTERS.center
@@ -4248,6 +4317,27 @@ export class GalleryScene {
     })
     const brassGlintX = 252 + (Math.floor(t * 14) % 126)
     g.rect(brassGlintX, 100, 10, 1).fill({ color: 0xfff5d4, alpha: 0.45 * devVis })
+
+    // 3b. First Hall Main Visual "Growing Algorithmic Tree" Node & Seed Pulse (x = 518..574, y = 138..224)
+    const seedPulse = 0.5 + 0.5 * Math.sin(t * 3.0)
+    g.rect(544, 204, 4, 4).fill({ color: 0xffe89e, alpha: (0.35 + 0.55 * seedPulse) * devVis })
+    const bfsNodes: Array<[number, number, number, number]> = [
+      [545, 195, 0xf2c977, 0.0],
+      [545, 185, 0x94c4a2, 0.8],
+      [535, 185, 0xf2c977, 1.5],
+      [554, 185, 0x94c4a2, 2.1],
+      [535, 175, 0xffe89e, 2.8],
+      [554, 175, 0xffe89e, 3.4],
+      [545, 145, 0xfff8de, 4.1],
+    ]
+    for (const [nx, ny, col, phase] of bfsNodes) {
+      const a = (0.2 + 0.68 * (0.5 + 0.5 * Math.sin(t * 3.4 - phase))) * devVis
+      g.rect(nx, ny, 2, 2).fill({ color: col, alpha: a })
+    }
+    // Pruned red state blink indicators
+    const pruneBlink = (0.18 + 0.55 * (0.5 + 0.5 * Math.sin(t * 2.2 + 1.2))) * devVis
+    g.rect(530, 190, 2, 2).fill({ color: 0xd45848, alpha: pruneBlink })
+    g.rect(560, 187, 2, 2).fill({ color: 0xd45848, alpha: pruneBlink })
 
     // 4. Wing OLED Exhibition Display Plaques
     for (let i = 0; i < SIDE_BAY_CENTERS.length; i++) {
