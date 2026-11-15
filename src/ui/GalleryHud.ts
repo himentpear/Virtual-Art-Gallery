@@ -1,23 +1,17 @@
 import type {
   ActiveMode,
-  ArtworkInspectionData,
   CorridorWingId,
   HeroTelemetry,
   Hotspot,
-  LightingPreset,
   VisitorProfile,
 } from '../types'
 
 export interface HudCallbacks {
   onToggleWardrobe: () => void
   onOpenRegistration: () => void
-  onCycleLighting: () => void
-  onToggleResonance: () => void
-  onToggleDimLights: () => void
   onToggleAlwaysRun: () => void
   onSelectWing: (wing: CorridorWingId) => void
   onTogglePatrol: () => void
-  onCloseModal: () => void
 }
 
 export class GalleryHud {
@@ -28,11 +22,8 @@ export class GalleryHud {
   private promptPill: HTMLElement
   private topPromptBanner: HTMLElement
   private topPromptTextEl: HTMLElement
-  private modalEl: HTMLElement
   private sitBanner: HTMLElement
   private toastEl: HTMLElement
-  private lightingLabelEl: HTMLElement
-  private resonanceBtn: HTMLButtonElement
   private runToggleBtn: HTMLButtonElement
   private patrolBtn: HTMLButtonElement
   private wingBtns: Record<CorridorWingId, HTMLButtonElement>
@@ -59,7 +50,7 @@ export class GalleryHud {
           <div class="brand-crest">◆</div>
           <div>
             <div class="brand-title">栽培与剪枝 · CULTIVATION & PRUNING</div>
-            <div class="brand-sub" data-role="lighting-label">夜幕静谧展厅</div>
+            <div class="brand-sub">算法美学线上互动展厅</div>
           </div>
         </div>
         <div class="hud-actions">
@@ -67,8 +58,6 @@ export class GalleryHud {
           <span class="state-chip" data-role="hero-state">待机 · IDLE</span>
           <button class="hud-btn" data-action="open-register" title="打开访客登记与形象定制 [U]">访客登记 [U]</button>
           <button class="hud-btn" data-action="toggle-run" title="切换常驻奔跑/行走">步行模式</button>
-          <button class="hud-btn" data-action="cycle-lighting" title="切换光影氛围 [V]">光影氛围 [V]</button>
-          <button class="hud-btn" data-action="toggle-resonance" title="画境星辉共鸣">星辉共鸣</button>
           <button class="hud-btn gold" data-action="toggle-wardrobe" title="打开幻装衣橱 [C]">幻装衣橱 [C]</button>
         </div>
       </header>
@@ -91,8 +80,6 @@ export class GalleryHud {
       <div class="world-prompt hidden" data-role="prompt-pill">
         <span class="prompt-key">E</span>
       </div>
-
-      <div class="inspection-modal hidden" data-role="inspection-modal"></div>
 
       <div class="sit-banner hidden" data-role="sit-banner">
         <span>静坐观展中 · 沉浸感受像素光影与地面倒影</span>
@@ -117,11 +104,8 @@ export class GalleryHud {
     this.promptPill = this.root.querySelector('[data-role="prompt-pill"]')!
     this.topPromptBanner = this.root.querySelector('[data-role="top-prompt-banner"]')!
     this.topPromptTextEl = this.root.querySelector('[data-role="top-prompt-text"]')!
-    this.modalEl = this.root.querySelector('[data-role="inspection-modal"]')!
     this.sitBanner = this.root.querySelector('[data-role="sit-banner"]')!
     this.toastEl = this.root.querySelector('[data-role="toast"]')!
-    this.lightingLabelEl = this.root.querySelector('[data-role="lighting-label"]')!
-    this.resonanceBtn = this.root.querySelector('[data-action="toggle-resonance"]')!
     this.runToggleBtn = this.root.querySelector('[data-action="toggle-run"]')!
     this.patrolBtn = this.root.querySelector('[data-action="toggle-patrol"]')!
     this.wingBtns = {
@@ -142,16 +126,12 @@ export class GalleryHud {
       const act = btn.dataset.action
       if (act === 'toggle-wardrobe') this.callbacks.onToggleWardrobe()
       else if (act === 'open-register') this.callbacks.onOpenRegistration()
-      else if (act === 'cycle-lighting') this.callbacks.onCycleLighting()
-      else if (act === 'toggle-resonance') this.callbacks.onToggleResonance()
-      else if (act === 'toggle-dim') this.callbacks.onToggleDimLights()
       else if (act === 'toggle-run') this.callbacks.onToggleAlwaysRun()
       else if (act === 'toggle-patrol') this.callbacks.onTogglePatrol()
       else if (act === 'wing-entrance') this.callbacks.onSelectWing('entrance')
       else if (act === 'wing-west') this.callbacks.onSelectWing('west')
       else if (act === 'wing-center') this.callbacks.onSelectWing('center')
       else if (act === 'wing-east') this.callbacks.onSelectWing('east')
-      else if (act === 'close-modal') this.callbacks.onCloseModal()
     })
   }
 
@@ -244,16 +224,11 @@ export class GalleryHud {
 
   public syncState(
     mode: ActiveMode,
-    preset: LightingPreset,
-    resonance: boolean,
     alwaysRun: boolean,
     currentWing: CorridorWingId,
     patrolActive: boolean,
     telemetry: HeroTelemetry,
   ): void {
-    this.lightingLabelEl.textContent = `${preset.name} · ${preset.subtitle}`
-    this.resonanceBtn.classList.toggle('active', resonance)
-    this.resonanceBtn.textContent = resonance ? '星辉共鸣 · 开' : '星辉共鸣'
     this.runToggleBtn.classList.toggle('active', alwaysRun)
     this.runToggleBtn.textContent = alwaysRun ? '常驻奔跑' : '步行模式'
 
@@ -325,52 +300,5 @@ export class GalleryHud {
     const cssY = canvasRect.top + (sy / 360) * canvasRect.height
     this.promptPill.style.left = `${Math.round(cssX)}px`
     this.promptPill.style.top = `${Math.round(cssY - 6)}px`
-  }
-
-  public showArtworkModal(
-    data: ArtworkInspectionData,
-    resonance: boolean,
-    dimmed: boolean,
-  ): void {
-    const isCenter =
-      data.id === 'center_painting' ||
-      data.id === 'west_center_painting' ||
-      data.id === 'east_center_painting'
-    this.modalEl.innerHTML = `
-      <div class="modal-card" style="--accent:${data.accentColor}">
-        <div class="modal-art-pane">
-          <img src="${data.canvasDataUrl}" alt="${data.title}" class="pixel-art-preview" />
-          <div class="art-frame-caption">${data.dimensions}</div>
-        </div>
-        <div class="modal-info-pane">
-          <div class="modal-eyebrow">${data.era}</div>
-          <h3>${data.title}</h3>
-          <div class="modal-en">${data.englishTitle}</div>
-          <div class="modal-meta">
-            <div><span>画师</span><strong>${data.artist}</strong></div>
-            <div><span>媒材</span><strong>${data.medium}</strong></div>
-          </div>
-          <p class="modal-desc">${data.description}</p>
-          <div class="modal-note">
-            <span class="note-badge">策展手记</span>
-            <span>${data.curatorialNote}</span>
-          </div>
-          <div class="modal-controls">
-            ${
-              isCenter
-                ? `<button class="primary-btn" data-action="toggle-resonance">${resonance ? '关闭星辉共鸣' : '激活画境星辉共鸣'}</button>`
-                : `<button class="hud-btn" data-action="toggle-dim">${dimmed ? '恢复展厅照明' : '调暗氛围聚光'}</button>
-                   <button class="hud-btn" data-action="cycle-lighting">切换展厅光影</button>`
-            }
-            <button class="ghost-btn" data-action="close-modal">离开观赏 [E / Esc]</button>
-          </div>
-        </div>
-      </div>
-    `
-    this.modalEl.classList.remove('hidden')
-  }
-
-  public hideArtworkModal(): void {
-    this.modalEl.classList.add('hidden')
   }
 }

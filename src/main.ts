@@ -12,13 +12,7 @@ import { InteractionManager } from './interaction/InteractionManager'
 import { GalleryHud } from './ui/GalleryHud'
 import { WardrobePanel } from './ui/WardrobePanel'
 import { loadVisitorProfile, RegistrationOverlay } from './ui/RegistrationOverlay'
-import type { ActiveMode, ArtworkId, CorridorWingId, Hotspot, LightingPresetId, VisitorProfile } from './types'
-
-const LIGHTING_ORDER: LightingPresetId[] = [
-  'night_gallery',
-  'starlight_dream',
-  'amber_evening',
-]
+import type { ActiveMode, CorridorWingId, Hotspot, VisitorProfile } from './types'
 
 async function main() {
   const host = document.querySelector<HTMLElement>('#app')
@@ -72,8 +66,6 @@ async function main() {
   app.stage.addChild(gallery.root)
 
   let mode: ActiveMode = 'register'
-  let activeInspectionId: ArtworkId | null = null
-  let lightingIdx = 0
   let visitorProfile: VisitorProfile = loadVisitorProfile()
   let hasEnteredGallery = false
 
@@ -81,10 +73,6 @@ async function main() {
     mode = nextMode
     hero.controlsLocked = nextMode !== 'explore'
     if (nextMode !== 'explore') hero.clearInputs()
-    if (nextMode !== 'gaze_center' && nextMode !== 'inspect_artwork') {
-      activeInspectionId = null
-      hud.hideArtworkModal()
-    }
     if (nextMode !== 'wardrobe' && wardrobePanel.isOpen()) {
       wardrobePanel.close()
     }
@@ -92,47 +80,6 @@ async function main() {
       registrationOverlay.closeWithFade()
     }
     gallery.setCameraFocus(nextMode, hotspot, hero.x)
-  }
-
-  const cycleLighting = () => {
-    lightingIdx = (lightingIdx + 1) % LIGHTING_ORDER.length
-    const nextId = LIGHTING_ORDER[lightingIdx]
-    gallery.applyLightingPreset(nextId)
-    const p = gallery.getLightingPreset()
-    hud.showToast(`光影氛围切换为「${p.name}」`)
-    if (activeInspectionId) {
-      hud.showArtworkModal(
-        artworks.inspections[activeInspectionId],
-        gallery.getResonanceEnabled(),
-        gallery.getLightsDimmed(),
-      )
-    }
-  }
-
-  const toggleResonance = () => {
-    const next = !gallery.getResonanceEnabled()
-    gallery.setResonanceEnabled(next)
-    hud.showToast(next ? '已激活《苍穹浮空城与世界树》星辉共鸣' : '已关闭画境星辉共鸣')
-    if (activeInspectionId) {
-      hud.showArtworkModal(
-        artworks.inspections[activeInspectionId],
-        gallery.getResonanceEnabled(),
-        gallery.getLightsDimmed(),
-      )
-    }
-  }
-
-  const toggleDimLights = () => {
-    const next = !gallery.getLightsDimmed()
-    gallery.setLightsDimmed(next)
-    hud.showToast(next ? '展厅聚光已调暗 · 突显画框夜光' : '展厅照明已恢复')
-    if (activeInspectionId) {
-      hud.showArtworkModal(
-        artworks.inspections[activeInspectionId],
-        gallery.getResonanceEnabled(),
-        gallery.getLightsDimmed(),
-      )
-    }
   }
 
   const toggleWardrobe = () => {
@@ -174,7 +121,6 @@ async function main() {
     if (mode === 'register') return
     if (gallery.isPatrolActive()) togglePatrol()
     if (wardrobePanel.isOpen()) wardrobePanel.close()
-    hud.hideArtworkModal()
     hud.setVisible(false)
     hero.sitAt(320, 296, 'right')
     hero.playPreviewClip('idle')
@@ -187,16 +133,12 @@ async function main() {
   const hud = new GalleryHud({
     onToggleWardrobe: toggleWardrobe,
     onOpenRegistration: openRegistration,
-    onCycleLighting: cycleLighting,
-    onToggleResonance: toggleResonance,
-    onToggleDimLights: toggleDimLights,
     onToggleAlwaysRun: () => {
       hero.alwaysRun = !hero.alwaysRun
       hud.showToast(hero.alwaysRun ? '已开启常驻奔跑（按住 Shift 步行）' : '已切回步行模式（按住 Shift 奔跑）')
     },
     onSelectWing: selectWing,
     onTogglePatrol: togglePatrol,
-    onCloseModal: () => setMode('explore'),
   })
 
   const wardrobePanel = new WardrobePanel(hero.getPack(), hero.getWardrobe(), {
@@ -253,34 +195,7 @@ async function main() {
   hud.setVisitorProfile(visitorProfile)
 
   const triggerHotspot = (spot: Hotspot) => {
-    if (
-      spot.id === 'center_painting' ||
-      spot.id === 'west_center_painting' ||
-      spot.id === 'east_center_painting'
-    ) {
-      activeInspectionId = spot.id
-      setMode('gaze_center', spot)
-      hud.showArtworkModal(
-        artworks.inspections[spot.id],
-        gallery.getResonanceEnabled(),
-        gallery.getLightsDimmed(),
-      )
-    } else if (
-      spot.id === 'left_plaque' ||
-      spot.id === 'right_plaque' ||
-      spot.id === 'west_left_plaque' ||
-      spot.id === 'west_right_plaque' ||
-      spot.id === 'east_left_plaque' ||
-      spot.id === 'east_right_plaque'
-    ) {
-      activeInspectionId = spot.id
-      setMode('inspect_artwork', spot)
-      hud.showArtworkModal(
-        artworks.inspections[spot.id],
-        gallery.getResonanceEnabled(),
-        gallery.getLightsDimmed(),
-      )
-    } else if (spot.id === 'left_bench') {
+    if (spot.id === 'left_bench') {
       hero.sitAt(1438, 323, 'right')
       setMode('sit_bench', spot)
     } else if (spot.id === 'right_bench') {
@@ -297,8 +212,6 @@ async function main() {
     } else if (spot.id === 'entrance_kiosk') {
       gallery.setEntranceGateOpen(true)
       hud.showToast('电子门票核验通过 · 检票闸门已为您开启')
-    } else if (spot.id === 'lighting_console') {
-      cycleLighting()
     } else if (spot.id === 'wardrobe_mirror') {
       toggleWardrobe()
     }
@@ -342,7 +255,6 @@ async function main() {
       (e.code === 'KeyE' ||
         e.code === 'KeyC' ||
         e.code === 'KeyU' ||
-        e.code === 'KeyV' ||
         e.code === 'KeyP' ||
         e.code === 'Escape')
     ) {
@@ -385,11 +297,6 @@ async function main() {
 
     if (e.code === 'KeyC') {
       toggleWardrobe()
-      return
-    }
-
-    if (e.code === 'KeyV') {
-      cycleLighting()
       return
     }
 
@@ -463,8 +370,6 @@ async function main() {
     hud.updatePromptPosition(nearest, mode, rect, cam.x, cam.y, cam.zoom)
     hud.syncState(
       mode,
-      gallery.getLightingPreset(),
-      gallery.getResonanceEnabled(),
       hero.alwaysRun,
       cam.wing,
       gallery.isPatrolActive(),
