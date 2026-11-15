@@ -96,6 +96,48 @@ body,
   pointer-events: none;
 }
 
+.top-reveal-zone {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: 21;
+}
+.top-reveal-pill {
+  margin-top: 6px;
+  padding: 2px 12px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: rgba(236, 208, 139, 0.78);
+  background: rgba(10, 13, 22, 0.68);
+  border: 1px solid rgba(218, 184, 114, 0.28);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  cursor: pointer;
+  transition: opacity 0.28s ease, transform 0.28s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.hud-overlay.top-menu-hidden .top-reveal-zone {
+  pointer-events: auto;
+}
+.hud-overlay.top-menu-hidden .top-reveal-pill {
+  opacity: 0.72;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.hud-overlay.top-menu-hidden .top-reveal-pill:hover {
+  opacity: 1;
+  color: var(--gold);
+  border-color: rgba(236, 208, 139, 0.62);
+}
+
 .hud-topbar {
   position: fixed;
   top: 14px;
@@ -111,11 +153,12 @@ body,
   border-radius: 6px;
   backdrop-filter: blur(8px);
   pointer-events: auto;
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  transition: opacity 0.32s ease, transform 0.32s ease;
 }
-.hud-topbar.dimmed {
+.hud-topbar.dimmed,
+.hud-overlay.top-menu-hidden .hud-topbar {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-18px);
   pointer-events: none;
 }
 
@@ -249,6 +292,7 @@ kbd {
   top: 112px;
   left: 50%;
   transform: translateX(-50%);
+  transition: top 0.32s ease;
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -269,6 +313,9 @@ kbd {
 }
 .top-prompt-banner.hidden {
   display: none;
+}
+.hud-overlay.top-menu-hidden .top-prompt-banner {
+  top: 32px;
 }
 .top-prompt-ornament {
   position: relative;
@@ -399,9 +446,10 @@ kbd {
   pointer-events: auto;
   transition: opacity 0.35s ease, transform 0.35s ease;
 }
-.wing-nav.dimmed {
+.wing-nav.dimmed,
+.hud-overlay.top-menu-hidden .wing-nav {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-16px);
   pointer-events: none;
 }
 .wing-pill {

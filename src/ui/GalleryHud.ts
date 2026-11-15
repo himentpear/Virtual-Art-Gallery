@@ -38,8 +38,12 @@ export class GalleryHud {
   private wingBtns: Record<CorridorWingId, HTMLButtonElement>
   private stateTagEl: HTMLElement
   private visitorChipEl: HTMLElement
+  private topRevealZone: HTMLElement
   private callbacks: HudCallbacks
   private toastTimer?: number
+  private topMenuHideTimer?: number
+  private topMenuVisible = true
+  private isPointerInTopArea = false
   private lastPromptHotspotId: string | null = null
   private promptTypeStartMs = 0
 
@@ -47,6 +51,9 @@ export class GalleryHud {
     this.callbacks = callbacks
     this.root.className = 'hud-overlay'
     this.root.innerHTML = `
+      <div class="top-reveal-zone" data-role="top-reveal-zone" title="移动鼠标至顶部显示菜单">
+        <span class="top-reveal-pill">◆ 菜单</span>
+      </div>
       <header class="hud-topbar">
         <div class="hud-brand">
           <div class="brand-crest">◆</div>
@@ -125,6 +132,9 @@ export class GalleryHud {
     }
     this.stateTagEl = this.root.querySelector('[data-role="hero-state"]')!
     this.visitorChipEl = this.root.querySelector('[data-role="visitor-chip"]')!
+    this.topRevealZone = this.root.querySelector('[data-role="top-reveal-zone"]')!
+
+    this.setupTopMenuAutoHide()
 
     this.root.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-action]')
@@ -145,8 +155,76 @@ export class GalleryHud {
     })
   }
 
+  private setupTopMenuAutoHide(): void {
+    const showTopMenu = () => {
+      if (this.topMenuHideTimer) {
+        window.clearTimeout(this.topMenuHideTimer)
+        this.topMenuHideTimer = undefined
+      }
+      if (!this.topMenuVisible) {
+        this.topMenuVisible = true
+        this.root.classList.remove('top-menu-hidden')
+      }
+    }
+
+    const scheduleHideTopMenu = (delayMs = 1400) => {
+      if (this.topMenuHideTimer) window.clearTimeout(this.topMenuHideTimer)
+      this.topMenuHideTimer = window.setTimeout(() => {
+        if (this.isPointerInTopArea) return
+        this.topMenuVisible = false
+        this.root.classList.add('top-menu-hidden')
+      }, delayMs)
+    }
+
+    window.addEventListener('mousemove', (e) => {
+      const inTopZone = e.clientY <= 116
+      if (inTopZone) {
+        this.isPointerInTopArea = true
+        showTopMenu()
+      } else if (this.isPointerInTopArea) {
+        this.isPointerInTopArea = false
+        scheduleHideTopMenu(1100)
+      }
+    })
+
+    window.addEventListener('mouseleave', () => {
+      this.isPointerInTopArea = false
+      scheduleHideTopMenu(900)
+    })
+
+    const onMenuEnter = () => {
+      this.isPointerInTopArea = true
+      showTopMenu()
+    }
+    const onMenuLeave = () => {
+      this.isPointerInTopArea = false
+      scheduleHideTopMenu(1100)
+    }
+
+    this.topBar.addEventListener('mouseenter', onMenuEnter)
+    this.topBar.addEventListener('mouseleave', onMenuLeave)
+    this.wingNav.addEventListener('mouseenter', onMenuEnter)
+    this.wingNav.addEventListener('mouseleave', onMenuLeave)
+    this.topRevealZone.addEventListener('mouseenter', onMenuEnter)
+    this.topRevealZone.addEventListener('click', onMenuEnter)
+
+    // Initially keep top menu visible briefly, then auto-hide
+    scheduleHideTopMenu(2600)
+  }
+
   public setVisible(visible: boolean): void {
     this.root.classList.toggle('hud-hidden', !visible)
+    if (visible) {
+      this.topMenuVisible = true
+      this.root.classList.remove('top-menu-hidden')
+      if (this.topMenuHideTimer) window.clearTimeout(this.topMenuHideTimer)
+      this.topMenuHideTimer = window.setTimeout(() => {
+        if (!this.isPointerInTopArea) {
+          this.topMenuVisible = false
+          this.root.classList.add('top-menu-hidden')
+        }
+      }, 2600)
+    }
   }
 
   public setVisitorProfile(profile: VisitorProfile): void {
