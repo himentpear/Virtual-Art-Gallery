@@ -1,3 +1,5 @@
+import '@fontsource/fusion-pixel-12px-proportional-sc'
+import '@fontsource/fusion-pixel-12px-monospaced-sc'
 import './style.css'
 import { Application } from 'pixi.js'
 import { generateAllArtworks } from './scene/Artworks'
