@@ -315,136 +315,66 @@ export class GalleryHud {
 
   public showPrologueModal(
     treeDataUrl: string,
-    bannerDataUrl: string,
+    _bannerDataUrl: string,
     profile: VisitorProfile,
     gateOpen: boolean,
   ): void {
-    const visitorName = profile.name.trim() || '匿名旅人'
+    const visitorName = profile.name.trim() || '旅人'
     this.prologueModalEl.innerHTML = `
-      <div class="prologue-card">
+      <div class="prologue-card poetic">
         <aside class="prologue-visual-col">
           <div class="prologue-visual-frame">
             <img src="${treeDataUrl}" alt="生长中的算法树" class="prologue-tree-img" />
             <div class="prologue-visual-caption">
-              <span>主视觉 · 《生长中的算法树》</span>
-              <span class="caption-en">The Growing Algorithmic Tree</span>
+              <span>《生长中的算法树》</span>
+              <span class="caption-en">Cultivation &amp; Pruning</span>
             </div>
           </div>
-
-          <div class="prologue-banner-card">
-            <img src="${bannerDataUrl}" alt="从种子到花园演化图谱" class="prologue-banner-img" />
-            <div class="prologue-banner-labels">
-              <span>I. 播种</span>
-              <span>II. 修剪</span>
-              <span>III. 栽培</span>
-              <span>IV. 开花</span>
-            </div>
-          </div>
-
-          <div class="prologue-palette-legend">
-            <div class="legend-title">展览视觉编码与色彩系统</div>
-            <div class="legend-grid">
-              <div class="legend-item">
-                <span class="swatch" style="background:#f2c977"></span>
-                <div><strong>暖黄 · 规则之种</strong><span>初始种子、最优解路径与互动提示</span></div>
-              </div>
-              <div class="legend-item">
-                <span class="swatch" style="background:#6e987c"></span>
-                <div><strong>灰绿 · 栽培生长</strong><span>可行状态扩展、关卡编辑与社区花园</span></div>
-              </div>
-              <div class="legend-item">
-                <span class="swatch" style="background:#a83c32"></span>
-                <div><strong>暗红 · 算法剪枝</strong><span>BFS 排除无效/重复状态与机械装置</span></div>
-              </div>
-              <div class="legend-item">
-                <span class="swatch" style="background:#f4efe2;border-color:#261c16"></span>
-                <div><strong>米白 × 墨黑 · 空间结构</strong><span>展签底衬、离散棋盘与影戏几何</span></div>
-              </div>
-            </div>
+          <div class="prologue-seed-note">
+            <span>一粒种子 · 万千分叉 · 一次驻足</span>
           </div>
         </aside>
 
-        <section class="prologue-content-col">
-          <div class="prologue-header">
+        <section class="prologue-content-col poetic-sheet">
+          <div class="prologue-header poetic-head">
             <div class="prologue-eyebrow">
-              <span class="unit-badge">HALL 01 · 种子大厅 (A区 · 序章与展览导览)</span>
-              <span class="credit-pill">通行证 ${profile.passId} · 初始栽培值 Credit +100</span>
+              <span class="unit-badge">序章 · PROLOGUE</span>
+              <span class="poetic-sub">栽培与剪枝：程序化生成到算法美学</span>
             </div>
-            <h2>栽培与剪枝：程序化生成到算法美学</h2>
-            <div class="prologue-en">Cultivation &amp; Pruning: From Procedural Generation to Algorithmic Aesthetics</div>
+            <h2>未眠的枝桠</h2>
           </div>
 
-          <blockquote class="prologue-proposition">
-            <div class="prop-label">核心策展命题 · CORE PROPOSITION</div>
-            <p>“当算法能够自动生成和验证关卡时，谁来决定一个游戏是否值得被游玩？”</p>
-            <div class="prop-pillars">
-              <span>① 规则生成可能性</span>
-              <span>② 算法验证可能性</span>
-              <span>③ 人类赋予可能性以价值</span>
-            </div>
-          </blockquote>
-
-          <div class="prologue-statement">
+          <article class="prologue-poem">
+            <p class="poem-lead">凌晨四点醒来，看见计算的荒原上，有一粒种子尚未眠去。</p>
             <p>
-              随着生成式技术与计算艺术的发展，算法已从辅助计算的工具演变为数字作品的生成机制。本展览以自主开发的两款 H5 益智游戏<strong>《咔哒！全体出发》</strong>（多主体同步控制）与<strong>《啪嗒！影子剧院》</strong>（空间投影与连锁消除）为媒介，将抽象的<strong>程序化生成（PCG）</strong>与<strong>广度优先搜索（BFS）</strong>转化为可观看、可游玩、可共同创作的互动艺术体验。
+              规则不过是几行沉默的刻度——左与右，进与退，光与影的投射。然而当第一声“咔哒”在寂静中响起，万千条可能的枝桠便在黑暗里悄然抽芽。
             </p>
-          </div>
+            <p>
+              机器是不知疲倦的园丁。它沿着每一条分叉摸索，在没有出口的迷途上轻轻落剪。那些被剪去的枝条并未真正消失，它们化作树冠间安静的留白，让唯一通向终点的光亮得以浮现。
+            </p>
+            <p class="poem-question">
+              可是，一条走得通的路，便值得长久地驻足吗？
+            </p>
+            <p>
+              纸偶的影子在幕布上交叠又离散，发条的脚步在方格间叩问回音。算法能丈量最短的步数，却无法替一次偶遇的心动命名。
+            </p>
+            <p class="poem-coda">
+              每一关都是一粒微小的种子。<br />
+              规则予它生长的形骸，算法修剪它繁芜的歧路；<br />
+              唯有当你俯身走入其中，那些原本冰冷的节点，才会在人类的凝视里，开出第一朵花。
+            </p>
+          </article>
 
-          <div class="prologue-dual-concepts">
-            <div class="concept-box cultivate">
-              <div class="concept-head">
-                <span class="concept-dot"></span>
-                <strong>栽培 · CULTIVATION</strong>
-                <span class="concept-tag">规则 × 随机 × 创造力</span>
-              </div>
-              <p>程序化生成器依据规则孕育关卡初稿，观众借助关卡编辑器调整地图、机关与目标条件。<strong>每一关都是一颗具有生长可能性的种子。</strong></p>
-            </div>
-            <div class="concept-box prune">
-              <div class="concept-head">
-                <span class="concept-dot"></span>
-                <strong>剪枝 · PRUNING</strong>
-                <span class="concept-tag">计算筛选 × 审美判断</span>
-              </div>
-              <p>BFS 求解器排除重复或无解状态并计算最短通关路径；玩家社区则通过游玩、评分与反馈，在计算可行性之上作出<strong>人类审美与体验价值判断</strong>。</p>
-            </div>
-          </div>
-
-          <div class="prologue-units">
-            <div class="units-header">从种子到花园 · 四大展览单元动线</div>
-            <div class="units-grid">
-              <div class="unit-item">
-                <span class="u-num">01 · 播种</span>
-                <strong>机械苗圃 &amp; 影子温室</strong>
-                <p>体验两款核心 H5 游戏，探索简单规则如何生成复杂策略空间。</p>
-              </div>
-              <div class="unit-item">
-                <span class="u-num">02 · 修剪</span>
-                <strong>修剪实验室</strong>
-                <p>《可能性之树》BFS 状态空间展开与《算法剪枝台》自动验证。</p>
-              </div>
-              <div class="unit-item">
-                <span class="u-num">03 · 栽培</span>
-                <strong>关卡栽培台 &amp; 种子档案</strong>
-                <p>自由创作或程序辅助生成原创关卡，生成可复现数字种子档案。</p>
-              </div>
-              <div class="unit-item">
-                <span class="u-num">04 · 开花</span>
-                <strong>公共关卡花园</strong>
-                <p>社区游玩评分、主客观指标对照与《共同生长的美术馆》生成景观。</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="prologue-footer">
+          <div class="prologue-footer poetic-foot">
             <div class="prologue-epigraph">
-              <span>欢迎你，<strong>${visitorName}</strong>（${profile.title}）—— 规则赋予它生长的可能，算法修剪它的枝杈，而你决定它是否值得开花。</span>
+              <span>致驻足者 <strong>${visitorName}</strong> · 通行证 ${profile.passId}</span>
             </div>
             <div class="prologue-actions">
               <button type="button" class="prologue-primary-btn" data-action="unlock-gate-explore">
-                ${gateOpen ? '步入展厅 · 开始探索 [Enter]' : '核验通行证 · 开启展厅闸门 [Enter]'}
+                ${gateOpen ? '推门入园 [Enter]' : '拾起种子 · 步入展厅 [Enter]'}
               </button>
               <button type="button" class="prologue-ghost-btn" data-action="close-prologue">
-                留在本厅观览 [E / Esc]
+                合上展签 [E / Esc]
               </button>
             </div>
           </div>
