@@ -23,23 +23,23 @@ const GENDER_OPTIONS: Array<{ id: VisitorGenderId; label: string }> = [
   { id: 'nonbinary', label: '多元' },
 ]
 
-const TITLE_OPTIONS = ['夜幕漫游者', '星象学者', '像素策展人', '幻境画师', '特邀贵宾']
+const TITLE_OPTIONS = ['算法策展人', '关卡栽培师', '剪枝观察者', '像素旅人', '特邀贵宾']
 
-const INTEREST_TAGS = ['星象奇观', '像素光影', '古典建筑', '静谧冥想', '幻想叙事']
+const INTEREST_TAGS = ['程序化生成', '算法美学', '益智解谜', '关卡设计', '像素艺术']
 
 const RANDOM_NAMES = [
-  '星轨漫游者',
-  '苍穹寻梦人',
-  '暮光绘影师',
-  '绯月观星客',
-  '云端旅人',
-  '静谧策展人',
-  '琥珀追光者',
+  '算法观察者',
+  '种子栽培师',
+  '剪枝漫游者',
+  '像素策展人',
+  '影戏旅人',
+  '发条研究员',
+  '花园访客',
 ]
 
 function generatePassId(): string {
   const num = 1000 + Math.floor(Math.random() * 9000)
-  return `AG-2026-${num}`
+  return `CP-2026-${num}`
 }
 
 function escapeHtml(text: string): string {
@@ -57,7 +57,7 @@ export function createDefaultVisitorProfile(): VisitorProfile {
     gender: 'undisclosed',
     title: TITLE_OPTIONS[0],
     bio: '',
-    tags: ['星象奇观', '像素光影'],
+    tags: ['程序化生成', '算法美学'],
     registeredAt: '',
   }
 }
@@ -70,7 +70,7 @@ export function loadVisitorProfile(): VisitorProfile {
     return {
       ...createDefaultVisitorProfile(),
       ...parsed,
-      tags: Array.isArray(parsed.tags) ? parsed.tags : ['星象奇观', '像素光影'],
+      tags: Array.isArray(parsed.tags) ? parsed.tags : ['程序化生成', '算法美学'],
     }
   } catch {
     return createDefaultVisitorProfile()
@@ -175,8 +175,8 @@ export class RegistrationOverlay {
         <div class="reg-brand">
           <span class="reg-crest">◆</span>
           <div>
-            <div class="reg-brand-title">苍穹回廊 · 访客登记与形象工坊</div>
-            <div class="reg-brand-sub">ASTRAL CORRIDOR VESTIBULE · 虚化景深廊道定制台</div>
+            <div class="reg-brand-title">栽培与剪枝 · 访客登记与形象工坊</div>
+            <div class="reg-brand-sub">CULTIVATION & PRUNING · 种子大厅访客定制台</div>
           </div>
         </div>
         <div class="reg-step-pill">STEP 01 / 形象定制 · 访客电子通行证签发</div>
@@ -507,7 +507,7 @@ export class RegistrationOverlay {
 
     this.passPreviewEl.innerHTML = `
       <div class="pass-card-top">
-        <span class="pass-card-brand">ASTRAL GALLERY · E-PASS</span>
+        <span class="pass-card-brand">CULTIVATION & PRUNING · E-PASS</span>
         <span class="pass-card-status">待签发</span>
       </div>
       <div class="pass-card-main">

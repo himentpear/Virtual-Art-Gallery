@@ -1,13 +1,51 @@
-# 苍穹回廊 · Astral Gallery
+# 栽培与剪枝：程序化生成到算法美学
 
-基于 PixiJS + PixelSyn 的正视像素展厅与多人同屏互动平台，使用 **Cloudflare Workers + Durable Objects + Workers Static Assets** 托管。
+**Cultivation & Pruning: From Procedural Generation to Algorithmic Aesthetics**
 
-## 目录结构
+《视觉艺术与计算美学》2026 互动计算艺术展览线上多人虚拟展厅与交互应用平台。本项目将程序化生成与状态空间搜索（BFS）从电子游戏内部机制转化为可观看、可体验、可参与的互动展览，让观众在像素虚拟美术馆中经历 **参观 → 游玩 → 发现规则 → 设计关卡 → 算法验证 → 发布作品 → 社区评价** 的完整过程。
 
-- `src/` — 前端展厅场景、角色控制器、换装与访客登记 UI（Vite + TypeScript）
-- `worker/` — Cloudflare Worker 入口（`worker/index.ts`）与多人房间 Durable Object（`worker/GalleryRoomDO.ts`）
-- `wrangler.jsonc` — Cloudflare Workers、Static Assets 与 Durable Objects SQLite 迁移配置
-- `.github/workflows/deploy.yml` — GitHub Actions 自动类型检查、构建与 Cloudflare 部署流水线
+---
+
+## 核心展品与展览单元
+
+### 预展核心作品
+- **《咔哒！全体出发》**：多主体同步控制益智游戏。以统一指令驱动多个机器人，呈现全局指令与局部状态差异、复杂状态空间与程序化关卡生成。
+- **《啪嗒！影子剧院》**：空间投影与连锁消除益智游戏。通过移动纸偶演员与调整投影方向触发连锁反应，结合 BFS 状态空间搜索与解法验证。
+
+### 四大主题单元
+1. **第一单元 · 播种（规则的起点）**：《咔哒！全体出发》《啪嗒！影子剧院》互动试玩、规则说明与预览屏幕。
+2. **第二单元 · 修剪（机器寻找答案）**：《可能性之树》搜索可视化与《算法剪枝台》自动验证及最短解求解。
+3. **第三单元 · 栽培（人人都是创作者）**：《关卡栽培台》（自由创作 / 程序辅助创作）与《关卡种子档案》可复现数字档案。
+4. **第四单元 · 开花（玩家与社区）**：《公共关卡花园》社区挑战评分与《共同生长的美术馆》实时数据生成艺术景观。
+
+### 线上展厅空间分区
+- **种子大厅**：访客登记、形象定制、电子通行证签发与 Credit 导览
+- **机械苗圃**：《咔哒！全体出发》展示与试玩区
+- **修剪实验室**：BFS 搜索可视化、关卡编辑器与自动验证系统
+- **影子温室 / 公共花园**：《啪嗒！影子剧院》展示区、玩家关卡与社区评价档案
+
+---
+
+## 技术栈与目录结构
+
+- **前端展厅**：PixiJS + PixelSyn 像素角色系统 + TypeScript + Vite（`src/`）
+- **边缘服务与实时房间**：Cloudflare Workers + Durable Objects（WebSocket Hibernation API + SQLite）+ Workers Static Assets（`worker/`）
+- **自动化流水线**：GitHub Actions 自动类型检查、构建与 Cloudflare 部署（`.github/workflows/deploy.yml`）
+
+```text
+├── src/
+│   ├── character/     # 像素角色控制与换装缩略图
+│   ├── interaction/   # 展厅热点交互管理
+│   ├── scene/         # 横板像素展厅场景与展品画框
+│   └── ui/            # 访客登记、电子通行证、幻装衣橱与 HUD
+├── worker/
+│   ├── index.ts       # Worker 路由入口（/api/*, /ws/room, ASSETS）
+│   └── GalleryRoomDO.ts # 多人同屏房间 Durable Object
+├── wrangler.jsonc     # Cloudflare Workers 与 Durable Objects 配置
+└── .github/workflows/ # GitHub Actions CI/CD 工作流
+```
+
+---
 
 ## 本地开发
 
@@ -20,12 +58,17 @@ npm run dev
 
 # 构建前端并启动 Cloudflare Worker + Durable Objects 本地模拟
 npm run dev:worker
+
+# 类型检查（前端 + Worker）
+npm run typecheck
 ```
 
-常用接口（启动 `dev:worker` 后）：
+本地 Worker 接口（启动 `npm run dev:worker` 后）：
 - `GET /api/health` — Worker 健康检查
 - `GET /api/room/stats?room=main-hall-1` — 查询房间在线人数与玩家列表（DO RPC）
 - `WS  /ws/room?room=main-hall-1` — 加入展厅房间 WebSocket（支持 `join` / `move` / `wardrobe` / `chat` / `ping`）
+
+---
 
 ## GitHub Actions 自动部署配置
 

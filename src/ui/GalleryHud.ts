@@ -51,7 +51,7 @@ export class GalleryHud {
         <div class="hud-brand">
           <div class="brand-crest">◆</div>
           <div>
-            <div class="brand-title">苍穹回廊 · ASTRAL GALLERY</div>
+            <div class="brand-title">栽培与剪枝 · CULTIVATION & PRUNING</div>
             <div class="brand-sub" data-role="lighting-label">夜幕静谧展厅</div>
           </div>
         </div>
@@ -67,10 +67,10 @@ export class GalleryHud {
       </header>
 
       <nav class="wing-nav" aria-label="展厅长廊分区与运镜">
-        <button class="wing-pill" data-action="wing-entrance">入口大厅</button>
-        <button class="wing-pill" data-action="wing-west">西翼星象廊</button>
-        <button class="wing-pill active" data-action="wing-center">中庭浮空厅</button>
-        <button class="wing-pill" data-action="wing-east">东翼绯月廊</button>
+        <button class="wing-pill" data-action="wing-entrance">种子大厅</button>
+        <button class="wing-pill" data-action="wing-west">机械苗圃</button>
+        <button class="wing-pill active" data-action="wing-center">修剪实验室</button>
+        <button class="wing-pill" data-action="wing-east">影子温室</button>
         <span class="wing-divider"></span>
         <button class="wing-pill" data-action="toggle-patrol" title="长廊自动巡礼镜头 [P]">长廊巡礼 [P]</button>
       </nav>

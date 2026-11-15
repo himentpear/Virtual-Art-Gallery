@@ -28,8 +28,8 @@ async function main() {
   loadingVeil.className = 'loading-veil'
   loadingVeil.innerHTML = `
     <div class="loading-crest">◆</div>
-    <div class="loading-title">苍穹回廊 · ASTRAL GALLERY</div>
-    <div class="loading-sub">正在构筑正视像素展厅与 PixelSyn 角色图层...</div>
+    <div class="loading-title">栽培与剪枝 · CULTIVATION & PRUNING</div>
+    <div class="loading-sub">正在构筑线上像素展厅与角色图层...</div>
   `
 
   const stageWrap = document.createElement('div')
@@ -154,10 +154,10 @@ async function main() {
     hero.actor.setFacing(hero.facing)
     hero.sitAt(targetX, 306, hero.facing)
     const wingNames: Record<CorridorWingId, string> = {
-      entrance: '入口大厅',
-      west: '西翼星象廊',
-      center: '中庭浮空厅',
-      east: '东翼绯月廊',
+      entrance: '种子大厅',
+      west: '机械苗圃',
+      center: '修剪实验室',
+      east: '影子温室',
     }
     hud.showToast(`镜头与角色已前往「${wingNames[wing]}」`)
   }
