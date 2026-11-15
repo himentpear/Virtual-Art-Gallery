@@ -1,0 +1,29 @@
+{
+  "name": "octopath-pixel-hall",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "dev:worker": "npm run build && wrangler dev",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "build:wardrobe": "node scripts/build-wardrobe-pack.mjs",
+    "cf-typegen": "wrangler types",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.worker.json --noEmit",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "@pixelsyn/compiler": "file:vendor/pixelsyn/pixelsyn-compiler-0.1.0.tgz",
+    "@pixelsyn/core": "file:vendor/pixelsyn/pixelsyn-core-0.1.0.tgz",
+    "@pixelsyn/runtime-pixi": "file:vendor/pixelsyn/pixelsyn-runtime-pixi-0.1.0.tgz",
+    "@pixelsyn/schema": "file:vendor/pixelsyn/pixelsyn-schema-0.1.0.tgz",
+    "pixi.js": "^8.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.0",
+    "wrangler": "^4.162.0"
+  }
+}
